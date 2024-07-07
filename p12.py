@@ -79,7 +79,10 @@ def callback_function(data):
                 'tracker_name': bytes_to_str(tracker.tracker_name),
                 'server_name': bytes_to_str(data.name),
                 'src_ip': ip_address,
-                'timestamp': timestamp
+                'timestamp': timestamp,
+                'pos_x': tracker.pos_x,
+                'pos_y': tracker.pos_y,
+                'pos_z': tracker.pos_z
             }
             trackers_list[ip_address][tracker.tracker_id] = tracker_info
 
@@ -219,6 +222,9 @@ def combined_info():
                 <th>Tracker Name</th>
                 <th>Server Name</th>
                 <th>IP Address</th>
+                <th>Pos X</th>
+                <th>Pos Y</th>
+                <th>Pos Z</th>
                 <th>Timestamp</th>
             </tr>
             {% for tracker in sorted_trackers_list %}
@@ -227,6 +233,9 @@ def combined_info():
                 <td>{{ tracker.tracker_name }}</td>
                 <td>{{ tracker.server_name }}</td>
                 <td>{{ tracker.src_ip }}</td>
+                <td>{{ tracker.pos_x }}</td>
+                <td>{{ tracker.pos_y }}</td>
+                <td>{{ tracker.pos_z }}</td>
                 <td>{{ tracker.timestamp }}</td>
             </tr>
             {% endfor %}
@@ -238,6 +247,9 @@ def combined_info():
                 <th>Tracker Name</th>
                 <th>Server Name</th>
                 <th>IP Address</th>
+                <th>Pos X</th>
+                <th>Pos Y</th>
+                <th>Pos Z</th>
                 <th>Timestamp</th>
             </tr>
             {% for tracker in sorted_stale_trackers_list %}
@@ -246,6 +258,9 @@ def combined_info():
                 <td>{{ tracker.tracker_name }}</td>
                 <td>{{ tracker.server_name }}</td>
                 <td>{{ tracker.src_ip }}</td>
+                <td>{{ tracker.pos_x }}</td>
+                <td>{{ tracker.pos_y }}</td>
+                <td>{{ tracker.pos_z }}</td>
                 <td>{{ tracker.timestamp }}</td>
             </tr>
             {% endfor %}
