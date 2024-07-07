@@ -114,16 +114,26 @@ def clean_stale_entries():
 
         time.sleep(1)  # Run cleanup every second
 
-# Define route to display system info
-@app.route('/system_info', methods=['GET'])
-def system_info():
+# Define route to display combined system info, active trackers, and stale trackers
+@app.route('/combined_info', methods=['GET'])
+def combined_info():
     sorted_systems_info = dict(sorted(systems_info.items()))
+    sorted_trackers_list = []
+    sorted_stale_trackers_list = []
+
+    for ip in sorted(trackers_list.keys()):
+        for tracker_id in sorted(trackers_list[ip].keys()):
+            sorted_trackers_list.append(trackers_list[ip][tracker_id])
+
+    for ip in sorted(stale_trackers.keys()):
+        for tracker_id in sorted(stale_trackers[ip].keys()):
+            sorted_stale_trackers_list.append(stale_trackers[ip][tracker_id])
 
     html_template = """
     <!DOCTYPE html>
     <html>
     <head>
-        <title>System Information</title>
+        <title>PSN Combined Info</title>
     </head>
     <body>
         <h1>System Information</h1>
@@ -151,26 +161,6 @@ def system_info():
             </tr>
             {% endfor %}
         </table>
-    </body>
-    </html>
-    """
-    return render_template_string(html_template, sorted_systems_info=sorted_systems_info)
-
-# Define route to display available trackers
-@app.route('/trackers', methods=['GET'])
-def trackers():
-    sorted_trackers_list = []
-    for ip in sorted(trackers_list.keys()):
-        for tracker_id in sorted(trackers_list[ip].keys()):
-            sorted_trackers_list.append(trackers_list[ip][tracker_id])
-
-    html_template = """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Available Trackers</title>
-    </head>
-    <body>
         <h1>Available Trackers</h1>
         <table border="1">
             <tr>
@@ -190,26 +180,6 @@ def trackers():
             </tr>
             {% endfor %}
         </table>
-    </body>
-    </html>
-    """
-    return render_template_string(html_template, sorted_trackers_list=sorted_trackers_list)
-
-# Define route to display stale trackers
-@app.route('/stale_trackers', methods=['GET'])
-def stale_trackers_view():
-    sorted_stale_trackers_list = []
-    for ip in sorted(stale_trackers.keys()):
-        for tracker_id in sorted(stale_trackers[ip].keys()):
-            sorted_stale_trackers_list.append(stale_trackers[ip][tracker_id])
-
-    html_template = """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Stale Trackers</title>
-    </head>
-    <body>
         <h1>Stale Trackers</h1>
         <table border="1">
             <tr>
@@ -232,7 +202,12 @@ def stale_trackers_view():
     </body>
     </html>
     """
-    return render_template_string(html_template, sorted_stale_trackers_list=sorted_stale_trackers_list)
+    return render_template_string(
+        html_template, 
+        sorted_systems_info=sorted_systems_info, 
+        sorted_trackers_list=sorted_trackers_list, 
+        sorted_stale_trackers_list=sorted_stale_trackers_list
+    )
 
 # Define route to display the main page with logging controls and frames
 @app.route('/', methods=['GET', 'POST'])
@@ -253,13 +228,10 @@ def display_info():
     <head>
         <title>PSN System Info and Trackers</title>
         <script>
-            function refreshIframes() {
-                document.getElementById('systemInfoFrame').src = document.getElementById('systemInfoFrame').src;
-                document.getElementById('trackersFrame').src = document.getElementById('trackersFrame').src;
-                document.getElementById('staleTrackersFrame').src = document.getElementById('staleTrackersFrame').src;
+            function refreshIframe() {
+                document.getElementById('combinedInfoFrame').src = document.getElementById('combinedInfoFrame').src;
             }
-            setInterval(refreshIframes, {{ system_info_refresh_rate }});  // Refresh system info frame
-            setInterval(refreshIframes, {{ trackers_refresh_rate }});  // Refresh trackers frame
+            setInterval(refreshIframe, {{ system_info_refresh_rate }});  // Refresh combined info frame
         </script>
     </head>
     <body>
@@ -273,12 +245,8 @@ def display_info():
             Trackers Cleanup Duration (s): <input type="number" name="trackers_cleanup_duration" value="{{ trackers_cleanup_duration }}"><br>
             <input type="submit" value="Update Settings">
         </form>
-        <h1>System Information</h1>
-        <iframe id="systemInfoFrame" src="/system_info" width="100%" height="300px"></iframe>
-        <h1>Available Trackers</h1>
-        <iframe id="trackersFrame" src="/trackers" width="100%" height="300px"></iframe>
-        <h1>Stale Trackers</h1>
-        <iframe id="staleTrackersFrame" src="/stale_trackers" width="100%" height="300px"></iframe>
+        <h1>Combined Information</h1>
+        <iframe id="combinedInfoFrame" src="/combined_info" width="100%" height="900px"></iframe>
     </body>
     </html>
     """
