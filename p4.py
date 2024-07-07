@@ -28,13 +28,14 @@ def callback_function(data):
             'version_low': info.version_low,
             'frame_id': info.frame_id,
             'frame_packet_count': info.packet_count,
-            'ip_address': info.src_ip  # Assuming src_ip is the correct attribute for source IP
+            'ip_address': data.ip_address if hasattr(data, 'ip_address') else 'N/A'
         }
         trackers_list = [
             {
+                'tracker_id': tracker.tracker_id,
                 'tracker_name': bytes_to_str(tracker.tracker_name),
                 'server_name': bytes_to_str(data.name),
-                'ip_address': info.src_ip  # Assuming src_ip is the correct attribute for source IP
+                'ip_address': data.ip_address if hasattr(data, 'ip_address') else 'N/A'
             }
             for tracker in data.trackers
         ]
@@ -86,12 +87,14 @@ def display_info():
         <h1>Available Trackers</h1>
         <table border="1">
             <tr>
+                <th>Tracker ID</th>
                 <th>Tracker Name</th>
                 <th>Server Name</th>
                 <th>IP Address</th>
             </tr>
             {% for tracker in trackers %}
             <tr>
+                <td>{{ tracker.tracker_id }}</td>
                 <td>{{ tracker.tracker_name }}</td>
                 <td>{{ tracker.server_name }}</td>
                 <td>{{ tracker.ip_address }}</td>
