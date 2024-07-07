@@ -23,7 +23,7 @@ def callback_function(data):
     with lock:
         if isinstance(data, pypsn.psn_info_packet):
             info = data.info
-            ip_address = data.ip_address
+            ip_address = info.src_ip
             print(f"Received data from {ip_address}")  # Debug print
             system_info = {
                 'server_name': bytes_to_str(data.name),
