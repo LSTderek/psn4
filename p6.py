@@ -72,6 +72,7 @@ class psn_receiver(Thread):
                 psn_data = self.parse_data(data)
                 if psn_data:
                     psn_data.info.src_ip = ip_address  # Add the IP address to the data object
+                    print("Callback with parsed data")  # Debug print
                     self.callback(psn_data)
                 else:
                     print("Failed to parse data")  # Debug print
