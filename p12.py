@@ -22,8 +22,7 @@ stale_trackers = {}
 default_config = {
     'log_info': True,
     'log_debug': False,
-    'system_info_refresh_rate': 5000,  # in milliseconds
-    'trackers_refresh_rate': 5000,  # in milliseconds
+    'page_auto_refresh_rate': 5000,  # in milliseconds
     'system_info_cleanup_duration': 10,  # in seconds
     'trackers_cleanup_duration': 5  # in seconds
 }
@@ -41,8 +40,7 @@ else:
 # Apply settings from config file
 log_info = config['log_info']
 log_debug = config['log_debug']
-system_info_refresh_rate = config['system_info_refresh_rate']
-trackers_refresh_rate = config['trackers_refresh_rate']
+page_auto_refresh_rate = config['page_auto_refresh_rate']
 system_info_cleanup_duration = config['system_info_cleanup_duration']
 trackers_cleanup_duration = config['trackers_cleanup_duration']
 
@@ -266,13 +264,12 @@ def combined_info():
 # Define route to display the main page with logging controls and frames
 @app.route('/', methods=['GET', 'POST'])
 def display_info():
-    global log_info, log_debug, system_info_refresh_rate, trackers_refresh_rate, system_info_cleanup_duration, trackers_cleanup_duration
+    global log_info, log_debug, page_auto_refresh_rate, system_info_cleanup_duration, trackers_cleanup_duration
 
     if request.method == 'POST':
         log_info = 'log_info' in request.form
         log_debug = 'log_debug' in request.form
-        system_info_refresh_rate = int(request.form.get('system_info_refresh_rate', 5000))
-        trackers_refresh_rate = int(request.form.get('trackers_refresh_rate', 5000))
+        page_auto_refresh_rate = int(request.form.get('page_auto_refresh_rate', 5000))
         system_info_cleanup_duration = int(request.form.get('system_info_cleanup_duration', 10))
         trackers_cleanup_duration = int(request.form.get('trackers_cleanup_duration', 5))
 
@@ -280,8 +277,7 @@ def display_info():
         config.update({
             'log_info': log_info,
             'log_debug': log_debug,
-            'system_info_refresh_rate': system_info_refresh_rate,
-            'trackers_refresh_rate': trackers_refresh_rate,
+            'page_auto_refresh_rate': page_auto_refresh_rate,
             'system_info_cleanup_duration': system_info_cleanup_duration,
             'trackers_cleanup_duration': trackers_cleanup_duration
         })
@@ -297,7 +293,7 @@ def display_info():
             function refreshIframe() {
                 document.getElementById('combinedInfoFrame').src = document.getElementById('combinedInfoFrame').src;
             }
-            setInterval(refreshIframe, {{ system_info_refresh_rate }});  // Refresh combined info frame
+            setInterval(refreshIframe, {{ page_auto_refresh_rate }});  // Refresh combined info frame
         </script>
     </head>
     <body>
@@ -305,8 +301,7 @@ def display_info():
         <form method="POST">
             <input type="checkbox" name="log_info" {% if log_info %}checked{% endif %}> Log Info<br>
             <input type="checkbox" name="log_debug" {% if log_debug %}checked{% endif %}> Log Debug<br>
-            System Info Refresh Rate (ms): <input type="number" name="system_info_refresh_rate" value="{{ system_info_refresh_rate }}"><br>
-            Trackers Refresh Rate (ms): <input type="number" name="trackers_refresh_rate" value="{{ trackers_refresh_rate }}"><br>
+            Page Auto Refresh Rate (ms): <input type="number" name="page_auto_refresh_rate" value="{{ page_auto_refresh_rate }}"><br>
             System Info Cleanup Duration (s): <input type="number" name="system_info_cleanup_duration" value="{{ system_info_cleanup_duration }}"><br>
             Trackers Cleanup Duration (s): <input type="number" name="trackers_cleanup_duration" value="{{ trackers_cleanup_duration }}"><br>
             <input type="submit" value="Update Settings">
@@ -320,8 +315,7 @@ def display_info():
         html_template, 
         log_info=log_info, 
         log_debug=log_debug, 
-        system_info_refresh_rate=system_info_refresh_rate, 
-        trackers_refresh_rate=trackers_refresh_rate, 
+        page_auto_refresh_rate=page_auto_refresh_rate, 
         system_info_cleanup_duration=system_info_cleanup_duration, 
         trackers_cleanup_duration=trackers_cleanup_duration
     )
