@@ -32,12 +32,14 @@ class psn_info:
         version_low: int,
         frame_id: int,
         packet_count: int,
+        src_ip: str = ''  # Add src_ip attribute with default value
     ):
         self.timestamp = timestamp
         self.version_high = version_high
         self.version_low = version_low
         self.frame_id = frame_id
         self.packet_count = packet_count
+        self.src_ip = src_ip  # Initialize src_ip
 
 
 class psn_tracker_info:
@@ -58,6 +60,7 @@ class psn_tracker:
         trgtpos: "psn_vector3" = None,
         status: int = 0,
         timestamp: int = 0,
+        src_ip: str = ''  # Add src_ip attribute with default value
     ):
         self.id = id
         self.info = info
@@ -65,9 +68,10 @@ class psn_tracker:
         self.speed = speed
         self.ori = ori
         self.accel = accel
-        self.trgtpos: psn_vector3 = trgtpos
+        self.trgtpos = trgtpos
         self.status = status
         self.timestamp = timestamp
+        self.src_ip = src_ip  # Initialize src_ip
 
 
 class psn_data_packet:
@@ -193,7 +197,7 @@ class receiver(Thread):
             except Exception as e:
                 print("Network data error:", e)
             else:
-                psn_data = parse_psn_packet(data)
+                psn_data = parse_psn_packet(data, addr[0])  # Pass the source IP address
                 self.callback(psn_data)
 
 
@@ -213,16 +217,16 @@ def get_socket(ip_addr, mcast_port):
     return sock
 
 
-def parse_psn_packet(buffer):
+def parse_psn_packet(buffer, src_ip):
     psn_id = unpack("<H", buffer[0:2])[0]
     if psn_id in iter(psn_v1_chunk):
         pass  # PSN V1 not supported by this parser
     elif psn_id in iter(psn_v2_chunk):
         chunk_id, chunk_buffer, rest = parse_chunk(buffer)
         if chunk_id == psn_v2_chunk.PSN_INFO_PACKET:
-            return parse_info(chunk_buffer)
+            return parse_info(chunk_buffer, src_ip)  # Pass the source IP address
         elif chunk_id == psn_v2_chunk.PSN_DATA_PACKET:
-            return parse_data(chunk_buffer)
+            return parse_data(chunk_buffer, src_ip)  # Pass the source IP address
 
 
 def parse_chunk(buffer):
@@ -236,11 +240,11 @@ def parse_chunk(buffer):
     return chunk_id, data, rest
 
 
-def parse_info(buffer):
+def parse_info(buffer, src_ip):
     while buffer:
         chunk_id, chunk_buffer, buffer = parse_chunk(buffer)
         if chunk_id == psn_info_chunk.PSN_INFO_PACKET_HEADER:
-            info = parse_header(chunk_buffer[:12])
+            info = parse_header(chunk_buffer[:12], src_ip)  # Pass the source IP address
         elif chunk_id == psn_info_chunk.PSN_INFO_SYSTEM_NAME:
             system_name = parse_system_name(chunk_buffer)
         elif chunk_id == psn_info_chunk.PSN_INFO_TRACKER_LIST:
@@ -249,20 +253,20 @@ def parse_info(buffer):
     return packet
 
 
-def parse_data(buffer):
+def parse_data(buffer, src_ip):
     while buffer:
         chunk_id, chunk_buffer, buffer = parse_chunk(buffer)
         if chunk_id == psn_data_chunk.PSN_DATA_PACKET_HEADER:
-            info = parse_header(chunk_buffer[:12])
+            info = parse_header(chunk_buffer[:12], src_ip)  # Pass the source IP address
         elif chunk_id == psn_data_chunk.PSN_DATA_TRACKER_LIST:
-            trackers = parse_data_tracker_list(chunk_buffer)
+            trackers = parse_data_tracker_list(chunk_buffer, src_ip)  # Pass the source IP address
     packet = psn_data_packet(info, trackers)
     return packet
 
 
-def parse_header(buffer):
+def parse_header(buffer, src_ip):
     timestamp, version_high, version_low, frame_id, packet_count = unpack("<QBBBB", buffer)
-    info = psn_info(timestamp, version_high, version_low, frame_id, packet_count)
+    info = psn_info(timestamp, version_high, version_low, frame_id, packet_count, src_ip)
     return info
 
 
@@ -288,12 +292,12 @@ def parse_info_tracker_list(buffer):
     return trackers
 
 
-def parse_data_tracker_list(buffer):
+def parse_data_tracker_list(buffer, src_ip):
     trackers: List["psn_tracker"] = []
     while buffer:
         tracker_id, chunk_buffer, buffer = parse_chunk(buffer)
 
-        tracker = psn_tracker(tracker_id)
+        tracker = psn_tracker(tracker_id, src_ip=src_ip)  # Pass the source IP address
 
         if len(chunk_buffer) > 0:
             while chunk_buffer:
