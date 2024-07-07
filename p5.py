@@ -123,7 +123,7 @@ def display_info():
                 <th>Server Name</th>
                 <th>IP Address</th>
             </tr>
-            {% for tracker in trackers %}
+            {% for tracker in trackers_list %}
             <tr>
                 <td>{{ tracker.tracker_id }}</td>
                 <td>{{ tracker.tracker_name }}</td>
@@ -136,7 +136,7 @@ def display_info():
     </html>
     """
     with lock:
-        return render_template_string(html_template, systems_info=systems_info, trackers=trackers_list)
+        return render_template_string(html_template, systems_info=systems_info, trackers_list=trackers_list)
 
 # Function to run Flask app
 def run_flask():
@@ -148,6 +148,9 @@ if __name__ == '__main__':
     try:
         # User-definable duration for stale source cleanup (in seconds)
         stale_duration = 60
+
+        # Initialize the receiver
+        receiver = psn_receiver(callback_function)
 
         # Start the receiver
         print("Starting PSN receiver...")
