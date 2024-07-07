@@ -28,9 +28,16 @@ def callback_function(data):
             'version_low': info.version_low,
             'frame_id': info.frame_id,
             'frame_packet_count': info.packet_count,
-            'ip_address': info.src_ip
+            'ip_address': info.src_ip  # Assuming src_ip is the correct attribute for source IP
         }
-        trackers_list = [{'tracker_name': bytes_to_str(tracker.tracker_name)} for tracker in data.trackers]
+        trackers_list = [
+            {
+                'tracker_name': bytes_to_str(tracker.tracker_name),
+                'server_name': bytes_to_str(data.name),
+                'ip_address': info.src_ip  # Assuming src_ip is the correct attribute for source IP
+            }
+            for tracker in data.trackers
+        ]
 
 # Create a receiver object with the callback function
 receiver = pypsn.receiver(callback_function)
@@ -80,10 +87,14 @@ def display_info():
         <table border="1">
             <tr>
                 <th>Tracker Name</th>
+                <th>Server Name</th>
+                <th>IP Address</th>
             </tr>
             {% for tracker in trackers %}
             <tr>
                 <td>{{ tracker.tracker_name }}</td>
+                <td>{{ tracker.server_name }}</td>
+                <td>{{ tracker.ip_address }}</td>
             </tr>
             {% endfor %}
         </table>
