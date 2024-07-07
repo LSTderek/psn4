@@ -24,6 +24,7 @@ def callback_function(data):
         if isinstance(data, pypsn.psn_info_packet):
             info = data.info
             ip_address = data.ip_address
+            print(f"Received data from {ip_address}")  # Debug print
             system_info = {
                 'server_name': bytes_to_str(data.name),
                 'packet_timestamp': info.timestamp,
@@ -45,6 +46,8 @@ def callback_function(data):
                 }
                 for tracker in data.trackers
             ]
+            print(f"System Info: {systems_info}")  # Debug print
+            print(f"Trackers List: {trackers_list}")  # Debug print
 
 # Custom psn_receiver class to capture IP address of incoming packets
 class psn_receiver(Thread):
