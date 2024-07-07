@@ -53,9 +53,9 @@ receiver = pypsn.receiver(callback_function)
 def display_info():
     sorted_systems_info = dict(sorted(systems_info.items()))
     sorted_trackers_list = []
-    for ip, trackers in trackers_list.items():
-        for tracker_id, tracker_info in sorted(trackers.items()):
-            sorted_trackers_list.append(tracker_info)
+    for ip in sorted(trackers_list.keys()):
+        for tracker_id in sorted(trackers_list[ip].keys()):
+            sorted_trackers_list.append(trackers_list[ip][tracker_id])
 
     html_template = """
     <!DOCTYPE html>
