@@ -28,14 +28,14 @@ def callback_function(data):
             'version_low': info.version_low,
             'frame_id': info.frame_id,
             'frame_packet_count': info.packet_count,
-            'ip_address': data.src_ip
+            'src_ip': data.src_ip if hasattr(data, 'src_ip') else 'N/A'
         }
         trackers_list = [
             {
                 'tracker_id': tracker.tracker_id,
                 'tracker_name': bytes_to_str(tracker.tracker_name),
                 'server_name': bytes_to_str(data.name),
-                'ip_address': data.src_ip
+                'src_ip': data.src_ip if hasattr(data, 'src_ip') else 'N/A'
             }
             for tracker in data.trackers
         ]
