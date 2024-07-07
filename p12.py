@@ -7,6 +7,7 @@ import socket
 from datetime import datetime
 import json
 import os
+from werkzeug.serving import make_server
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -326,9 +327,19 @@ def display_info():
     )
 
 # Function to run Flask app
-def run_flask():
-    print("Starting Flask server...")
-    app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
+class ServerThread(Thread):
+    def __init__(self, app):
+        Thread.__init__(self)
+        self.server = make_server('0.0.0.0', 5000, app)
+        self.ctx = app.app_context()
+        self.ctx.push()
+
+    def run(self):
+        print("Starting Flask server...")
+        self.server.serve_forever()
+
+    def shutdown(self):
+        self.server.shutdown()
 
 # Start the receiver and Flask server in separate threads
 if __name__ == '__main__':
@@ -343,8 +354,8 @@ if __name__ == '__main__':
         cleaner_thread.start()
 
         # Start Flask server
-        flask_thread = Thread(target=run_flask)
-        flask_thread.start()
+        server_thread = ServerThread(app)
+        server_thread.start()
 
         # Keep the main thread alive
         while True:
@@ -355,9 +366,12 @@ if __name__ == '__main__':
         # Stop the receiver
         receiver.stop()
 
+        # Stop Flask server
+        server_thread.shutdown()
+
         # Wait for threads to finish
         receiver_thread.join()
         cleaner_thread.join()
-        flask_thread.join()
+        server_thread.join()
 
         print("Stopped.")
