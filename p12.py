@@ -80,9 +80,9 @@ def callback_function(data):
                 'server_name': bytes_to_str(data.name),
                 'src_ip': ip_address,
                 'timestamp': timestamp,
-                'pos_x': tracker.pos.x,
-                'pos_y': tracker.pos.y,
-                'pos_z': tracker.pos.z
+                'pos.x': tracker.pos_x,
+                'pos.y': tracker.pos_y,
+                'pos.z': tracker.pos_z
             }
             trackers_list[ip_address][tracker.tracker_id] = tracker_info
 
