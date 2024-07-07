@@ -26,7 +26,7 @@ def callback_function(data):
     print("Callback function called")  # Debug print
     if isinstance(data, pypsn.psn_info_packet):
         info = data.info
-        ip_address = info.src_ip if hasattr(info, 'src_ip') else 'N/A'
+        ip_address = data.ip_address if hasattr(data, 'ip_address') else 'N/A'
         print(f"Received data from {ip_address}")  # Debug print
         system_info = {
             'server_name': bytes_to_str(data.name),
@@ -71,7 +71,7 @@ class psn_receiver(Thread):
                 print(f"Data received from {ip_address}: {data}")  # Debug print
                 psn_data = self.parse_data(data)
                 if psn_data:
-                    psn_data.info.src_ip = ip_address  # Add the IP address to the data object
+                    psn_data.ip_address = ip_address  # Add the IP address to the data object
                     print("Callback with parsed data")  # Debug print
                     self.callback(psn_data)
                 else:
