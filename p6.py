@@ -10,7 +10,7 @@ app = Flask(__name__)
 
 # Dictionary to store system information keyed by source IP
 systems_info = {}
-trackers_list = []
+trackers_list = {}
 
 # Define a function to convert bytes to string
 def bytes_to_str(b):
@@ -33,15 +33,17 @@ def callback_function(data):
         }
         systems_info[ip_address] = system_info
 
-        trackers_list = [
-            {
+        if ip_address not in trackers_list:
+            trackers_list[ip_address] = {}
+
+        for tracker in data.trackers:
+            tracker_info = {
                 'tracker_id': tracker.tracker_id,
                 'tracker_name': bytes_to_str(tracker.tracker_name),
                 'server_name': bytes_to_str(data.name),
                 'src_ip': ip_address
             }
-            for tracker in data.trackers
-        ]
+            trackers_list[ip_address][tracker.tracker_id] = tracker_info
 
 # Create a receiver object with the callback function
 receiver = pypsn.receiver(callback_function)
@@ -50,6 +52,7 @@ receiver = pypsn.receiver(callback_function)
 @app.route('/', methods=['GET'])
 def display_info():
     sorted_systems_info = dict(sorted(systems_info.items()))
+    sorted_trackers_list = {ip: dict(sorted(trackers.items())) for ip, trackers in trackers_list.items()}
 
     html_template = """
     <!DOCTYPE html>
@@ -82,6 +85,8 @@ def display_info():
             {% endfor %}
         </table>
         <h1>Available Trackers</h1>
+        {% for ip, trackers in sorted_trackers_list.items() %}
+        <h2>Trackers from {{ ip }}</h2>
         <table border="1">
             <tr>
                 <th>Tracker ID</th>
@@ -89,7 +94,7 @@ def display_info():
                 <th>Server Name</th>
                 <th>IP Address</th>
             </tr>
-            {% for tracker in trackers_list %}
+            {% for tracker in trackers.values() %}
             <tr>
                 <td>{{ tracker.tracker_id }}</td>
                 <td>{{ tracker.tracker_name }}</td>
@@ -98,10 +103,11 @@ def display_info():
             </tr>
             {% endfor %}
         </table>
+        {% endfor %}
     </body>
     </html>
     """
-    return render_template_string(html_template, sorted_systems_info=sorted_systems_info, trackers_list=trackers_list)
+    return render_template_string(html_template, sorted_systems_info=sorted_systems_info, sorted_trackers_list=sorted_trackers_list)
 
 # Function to run Flask app
 def run_flask():
