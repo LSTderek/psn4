@@ -49,6 +49,41 @@ def callback_function(data):
             }
             trackers_list[ip_address][tracker.tracker_id] = tracker_info
 
+# Custom receiver class to capture IP address of incoming packets
+class psn_receiver(Thread):
+    def __init__(self, callback):
+        Thread.__init__(self)
+        self.callback = callback
+        self.running = True
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.bind(("", 56565))
+
+    def run(self):
+        print("Receiver started")
+        while self.running:
+            try:
+                data, addr = self.sock.recvfrom(1024)
+                ip_address = addr[0]
+                psn_data = self.parse_data(data)
+                if psn_data:
+                    psn_data.info.src_ip = ip_address  # Add the IP address to the data object
+                    self.callback(psn_data)
+            except Exception as e:
+                print(f"Error receiving data: {e}")
+
+    def parse_data(self, data):
+        try:
+            # Assuming parse_data correctly parses data into psn_info_packet
+            return pypsn.psn_info_packet(data)
+        except Exception as e:
+            print(f"Error parsing data: {e}")
+            return None
+
+    def stop(self):
+        self.running = False
+        self.sock.close()
+        print("Receiver stopped")
+
 # Function to clean up stale entries
 def clean_stale_entries():
     global systems_info, trackers_list
@@ -56,16 +91,16 @@ def clean_stale_entries():
         current_time = datetime.now()
         systems_to_delete = []
         trackers_to_delete = {}
-        
+
         # Clean up systems_info
         for ip, system in systems_info.items():
             system_timestamp = datetime.strptime(system['timestamp'], '%Y-%m-%d %H:%M:%S')
             if (current_time - system_timestamp).total_seconds() > 10:
                 systems_to_delete.append(ip)
-        
+
         for ip in systems_to_delete:
             del systems_info[ip]
-        
+
         # Clean up trackers_list
         for ip, trackers in trackers_list.items():
             for tracker_id, tracker in trackers.items():
@@ -74,13 +109,13 @@ def clean_stale_entries():
                     if ip not in trackers_to_delete:
                         trackers_to_delete[ip] = []
                     trackers_to_delete[ip].append(tracker_id)
-        
+
         for ip, tracker_ids in trackers_to_delete.items():
             for tracker_id in tracker_ids:
                 del trackers_list[ip][tracker_id]
             if not trackers_list[ip]:  # If no trackers left for this IP, remove the key
                 del trackers_list[ip]
-        
+
         time.sleep(1)  # Run cleanup every second
 
 # Define route to display system info and available trackers in tables
@@ -156,6 +191,9 @@ def run_flask():
 # Start the receiver and Flask server in separate threads
 if __name__ == '__main__':
     try:
+        # Initialize the receiver
+        receiver = psn_receiver(callback_function)
+
         # Start the receiver
         print("Starting PSN receiver...")
         receiver_thread = Thread(target=receiver.start)
