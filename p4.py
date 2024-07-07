@@ -61,7 +61,7 @@ def display_info():
             </tr>
             <tr>
                 <th>IP Address</th>
-                <td>{{ system_info.ip_address }}</td>
+                <td>{{ system_info.src_ip }}</td>
             </tr>
             <tr>
                 <th>Packet Timestamp</th>
@@ -97,7 +97,7 @@ def display_info():
                 <td>{{ tracker.tracker_id }}</td>
                 <td>{{ tracker.tracker_name }}</td>
                 <td>{{ tracker.server_name }}</td>
-                <td>{{ tracker.ip_address }}</td>
+                <td>{{ tracker.src_ip }}</td>
             </tr>
             {% endfor %}
         </table>
