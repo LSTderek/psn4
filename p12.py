@@ -22,7 +22,7 @@ stale_trackers = {}
 default_config = {
     'log_info': True,
     'log_debug': False,
-    'page_auto_refresh_rate': 5000,  # in milliseconds
+    'page_auto_refresh_rate': 5,  # in seconds
     'system_info_cleanup_duration': 10,  # in seconds
     'trackers_cleanup_duration': 5  # in seconds
 }
@@ -269,7 +269,7 @@ def display_info():
     if request.method == 'POST':
         log_info = 'log_info' in request.form
         log_debug = 'log_debug' in request.form
-        page_auto_refresh_rate = int(request.form.get('page_auto_refresh_rate', 5000))
+        page_auto_refresh_rate = int(request.form.get('page_auto_refresh_rate', 5))
         system_info_cleanup_duration = int(request.form.get('system_info_cleanup_duration', 10))
         trackers_cleanup_duration = int(request.form.get('trackers_cleanup_duration', 5))
 
@@ -293,7 +293,7 @@ def display_info():
             function refreshIframe() {
                 document.getElementById('combinedInfoFrame').src = document.getElementById('combinedInfoFrame').src;
             }
-            setInterval(refreshIframe, {{ page_auto_refresh_rate }});  // Refresh combined info frame
+            setInterval(refreshIframe, {{ page_auto_refresh_rate }} * 1000);  // Refresh combined info frame in seconds
         </script>
     </head>
     <body>
@@ -301,7 +301,7 @@ def display_info():
         <form method="POST">
             <input type="checkbox" name="log_info" {% if log_info %}checked{% endif %}> Log Info<br>
             <input type="checkbox" name="log_debug" {% if log_debug %}checked{% endif %}> Log Debug<br>
-            Page Auto Refresh Rate (ms): <input type="number" name="page_auto_refresh_rate" value="{{ page_auto_refresh_rate }}"><br>
+            Page Auto Refresh Rate (s): <input type="number" name="page_auto_refresh_rate" value="{{ page_auto_refresh_rate }}"><br>
             System Info Cleanup Duration (s): <input type="number" name="system_info_cleanup_duration" value="{{ system_info_cleanup_duration }}"><br>
             Trackers Cleanup Duration (s): <input type="number" name="trackers_cleanup_duration" value="{{ trackers_cleanup_duration }}"><br>
             <input type="submit" value="Update Settings">
