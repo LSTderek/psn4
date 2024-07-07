@@ -20,10 +20,11 @@ def bytes_to_str(b):
 # Define a callback function to handle the received PSN data
 def callback_function(data):
     global systems_info, trackers_list
+    print("Callback function called")  # Debug print
     with lock:
         if isinstance(data, pypsn.psn_info_packet):
             info = data.info
-            ip_address = info.src_ip if hasattr(info, 'src_ip') else 'N/A'
+            ip_address = data.ip_address if hasattr(data, 'ip_address') else 'N/A'
             print(f"Received data from {ip_address}")  # Debug print
             system_info = {
                 'server_name': bytes_to_str(data.name),
@@ -59,20 +60,27 @@ class psn_receiver(Thread):
         self.sock.bind(("", 56565))
 
     def run(self):
+        print("Receiver started")  # Debug print
         while self.running:
-            data, addr = self.sock.recvfrom(1024)
-            ip_address = addr[0]
-            psn_data = self.parse_data(data)
-            psn_data.info.src_ip = ip_address  # Add the IP address to the data object
-            self.callback(psn_data)
+            try:
+                data, addr = self.sock.recvfrom(1024)
+                ip_address = addr[0]
+                print(f"Data received from {ip_address}")  # Debug print
+                psn_data = self.parse_data(data)
+                psn_data.ip_address = ip_address  # Add the IP address to the data object
+                self.callback(psn_data)
+            except Exception as e:
+                print(f"Error receiving data: {e}")  # Debug print
 
     def parse_data(self, data):
+        print("Parsing data")  # Debug print
         # Assuming parse_data correctly parses data into psn_info_packet
         return pypsn.psn_info_packet(data)
 
     def stop(self):
         self.running = False
         self.sock.close()
+        print("Receiver stopped")  # Debug print
 
 # Define route to display system info and available trackers in tables
 @app.route('/', methods=['GET'])
@@ -132,7 +140,7 @@ def display_info():
 
 # Function to run Flask app
 def run_flask():
-    print("Starting Flask server...")
+    print("Starting Flask server...")  # Debug print
     app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
 
 # Start the receiver and Flask server in separate threads
