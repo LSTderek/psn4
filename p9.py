@@ -97,34 +97,19 @@ def clean_stale_entries():
 
         time.sleep(1)  # Run cleanup every second
 
-# Define route to display system info and available trackers in tables
-@app.route('/', methods=['GET', 'POST'])
-def display_info():
-    global log_info, log_debug
-
-    if request.method == 'POST':
-        log_info = 'log_info' in request.form
-        log_debug = 'log_debug' in request.form
-
+# Define route to display system info
+@app.route('/system_info', methods=['GET'])
+def system_info():
     sorted_systems_info = dict(sorted(systems_info.items()))
-    sorted_trackers_list = []
-    for ip in sorted(trackers_list.keys()):
-        for tracker_id in sorted(trackers_list[ip].keys()):
-            sorted_trackers_list.append(trackers_list[ip][tracker_id])
 
     html_template = """
     <!DOCTYPE html>
     <html>
     <head>
-        <title>PSN System Info and Trackers</title>
+        <title>System Information</title>
     </head>
     <body>
         <h1>System Information</h1>
-        <form method="POST">
-            <input type="checkbox" name="log_info" {% if log_info %}checked{% endif %}> Log Info<br>
-            <input type="checkbox" name="log_debug" {% if log_debug %}checked{% endif %}> Log Debug<br>
-            <input type="submit" value="Update Logging">
-        </form>
         <table border="1">
             <tr>
                 <th>Source IP</th>
@@ -149,6 +134,26 @@ def display_info():
             </tr>
             {% endfor %}
         </table>
+    </body>
+    </html>
+    """
+    return render_template_string(html_template, sorted_systems_info=sorted_systems_info)
+
+# Define route to display available trackers
+@app.route('/trackers', methods=['GET'])
+def trackers():
+    sorted_trackers_list = []
+    for ip in sorted(trackers_list.keys()):
+        for tracker_id in sorted(trackers_list[ip].keys()):
+            sorted_trackers_list.append(trackers_list[ip][tracker_id])
+
+    html_template = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Available Trackers</title>
+    </head>
+    <body>
         <h1>Available Trackers</h1>
         <table border="1">
             <tr>
@@ -171,7 +176,45 @@ def display_info():
     </body>
     </html>
     """
-    return render_template_string(html_template, sorted_systems_info=sorted_systems_info, sorted_trackers_list=sorted_trackers_list, log_info=log_info, log_debug=log_debug)
+    return render_template_string(html_template, sorted_trackers_list=sorted_trackers_list)
+
+# Define route to display the main page with logging controls and frames
+@app.route('/', methods=['GET', 'POST'])
+def display_info():
+    global log_info, log_debug
+
+    if request.method == 'POST':
+        log_info = 'log_info' in request.form
+        log_debug = 'log_debug' in request.form
+
+    html_template = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>PSN System Info and Trackers</title>
+        <script>
+            function refreshIframes() {
+                document.getElementById('systemInfoFrame').src = document.getElementById('systemInfoFrame').src;
+                document.getElementById('trackersFrame').src = document.getElementById('trackersFrame').src;
+            }
+            setInterval(refreshIframes, 5000);  // Refresh every 5 seconds
+        </script>
+    </head>
+    <body>
+        <h1>Logging Controls</h1>
+        <form method="POST">
+            <input type="checkbox" name="log_info" {% if log_info %}checked{% endif %}> Log Info<br>
+            <input type="checkbox" name="log_debug" {% if log_debug %}checked{% endif %}> Log Debug<br>
+            <input type="submit" value="Update Logging">
+        </form>
+        <h1>System Information</h1>
+        <iframe id="systemInfoFrame" src="/system_info" width="100%" height="300px"></iframe>
+        <h1>Available Trackers</h1>
+        <iframe id="trackersFrame" src="/trackers" width="100%" height="300px"></iframe>
+    </body>
+    </html>
+    """
+    return render_template_string(html_template, log_info=log_info, log_debug=log_debug)
 
 # Function to run Flask app
 def run_flask():
