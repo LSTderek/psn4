@@ -300,8 +300,15 @@ def run_flask():
 # Start the receiver and Flask server in separate threads
 if __name__ == '__main__':
     try:
-        # Start the receiver
-        print("Starting PSN receiver...")
+        #     except KeyboardInterrupt:
+        if request.method == 'POST':
+            log_info = 'log_info' in request.form
+            log_debug = 'log_debug' in request.form
+            # Convert input from seconds to milliseconds for internal use if needed
+            system_info_refresh_rate = int(request.form.get('system_info_refresh_rate', 5))  # Default is now 5 seconds
+            trackers_refresh_rate = int(request.form.get('trackers_refresh_rate', 5))  # Default is now 5 seconds
+            system_info_cleanup_duration = int(request.form.get('system_info_cleanup_duration', 10))
+            trackers_cleanup_duration = int(request.form.get('trackers_cleanup_duration', 5))rint("Starting PSN receiver...")
         receiver_thread = Thread(target=receiver.start)
         receiver_thread.start()
 

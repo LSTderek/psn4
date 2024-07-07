@@ -1,0 +1,8 @@
+{
+    "log_info": true,
+    "log_debug": false,
+    "system_info_refresh_rate": 5000,
+    "trackers_refresh_rate": 5000,
+    "system_info_cleanup_duration": 10,
+    "trackers_cleanup_duration": 5
+}
