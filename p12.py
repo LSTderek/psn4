@@ -51,10 +51,12 @@ def bytes_to_str(b):
 # Define a callback function to handle the received PSN data
 def callback_function(data):
     global systems_info, trackers_list, stale_trackers, stale_systems
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    
     if isinstance(data, pypsn.psn_info_packet):
         info = data.info
         ip_address = info.src_ip if hasattr(info, 'src_ip') else 'N/A'
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
         system_info = {
             'server_name': bytes_to_str(data.name),
             'packet_timestamp': info.timestamp,
@@ -69,7 +71,13 @@ def callback_function(data):
 
         if ip_address in stale_systems:
             del stale_systems[ip_address]
-
+        
+        if log_info:
+            print(f"Received system info from {ip_address} at {timestamp}")
+    
+    elif isinstance(data, pypsn.psn_data_packet):
+        ip_address = data.src_ip if hasattr(data, 'src_ip') else 'N/A'
+        
         if ip_address not in trackers_list:
             trackers_list[ip_address] = {}
 
@@ -77,12 +85,12 @@ def callback_function(data):
             tracker_info = {
                 'tracker_id': tracker.tracker_id,
                 'tracker_name': bytes_to_str(tracker.tracker_name),
-                'server_name': bytes_to_str(data.name),
+                'server_name': 'Unknown',  # Server name not available in data packet
                 'src_ip': ip_address,
                 'timestamp': timestamp,
-                'pos.x': tracker.pos_x,
-                'pos.y': tracker.pos_y,
-                'pos.z': tracker.pos_z
+                'pos_x': tracker.position.x,
+                'pos_y': tracker.position.y,
+                'pos_z': tracker.position.z
             }
             trackers_list[ip_address][tracker.tracker_id] = tracker_info
 
@@ -93,7 +101,7 @@ def callback_function(data):
                     del stale_trackers[ip_address]
 
         if log_info:
-            print(f"Received data from {ip_address} at {timestamp}")
+            print(f"Received tracker data from {ip_address} at {timestamp}")
 
 # Create a receiver object with the callback function
 receiver = pypsn.receiver(callback_function)
