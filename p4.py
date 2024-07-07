@@ -28,7 +28,7 @@ def callback_function(data):
             'version_low': info.version_low,
             'frame_id': info.frame_id,
             'frame_packet_count': info.packet_count,
-            'ip_address': data.src_ip
+            'ip_address': info.src_ip
         }
         trackers_list = [{'tracker_name': bytes_to_str(tracker.tracker_name)} for tracker in data.trackers]
 
