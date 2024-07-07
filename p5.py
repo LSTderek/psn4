@@ -65,17 +65,26 @@ class psn_receiver(Thread):
             try:
                 data, addr = self.sock.recvfrom(1024)
                 ip_address = addr[0]
-                print(f"Data received from {ip_address}")  # Debug print
+                print(f"Data received from {ip_address}: {data}")  # Debug print
                 psn_data = self.parse_data(data)
-                psn_data.ip_address = ip_address  # Add the IP address to the data object
-                self.callback(psn_data)
+                if psn_data:
+                    psn_data.ip_address = ip_address  # Add the IP address to the data object
+                    self.callback(psn_data)
+                else:
+                    print("Failed to parse data")  # Debug print
             except Exception as e:
                 print(f"Error receiving data: {e}")  # Debug print
 
     def parse_data(self, data):
         print("Parsing data")  # Debug print
-        # Assuming parse_data correctly parses data into psn_info_packet
-        return pypsn.psn_info_packet(data)
+        try:
+            # Assuming parse_data correctly parses data into psn_info_packet
+            psn_packet = pypsn.psn_info_packet(data)
+            print("Parsed data successfully")  # Debug print
+            return psn_packet
+        except Exception as e:
+            print(f"Error parsing data: {e}")  # Debug print
+            return None
 
     def stop(self):
         self.running = False
