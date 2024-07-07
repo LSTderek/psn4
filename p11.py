@@ -1,5 +1,3 @@
-
-#VS
 # Import necessary modules
 import pypsn
 from flask import Flask, render_template_string, request
@@ -32,7 +30,7 @@ def bytes_to_str(b):
 
 # Define a callback function to handle the received PSN data
 def callback_function(data):
-    global systems_info, trackers_list
+    global systems_info, trackers_list, stale_trackers
     if isinstance(data, pypsn.psn_info_packet):
         info = data.info
         ip_address = info.src_ip if hasattr(info, 'src_ip') else 'N/A'
@@ -61,6 +59,12 @@ def callback_function(data):
                 'timestamp': timestamp
             }
             trackers_list[ip_address][tracker.tracker_id] = tracker_info
+
+            # Remove the tracker from stale_trackers if it is being updated
+            if ip_address in stale_trackers and tracker.tracker_id in stale_trackers[ip_address]:
+                del stale_trackers[ip_address][tracker.tracker_id]
+                if not stale_trackers[ip_address]:  # If no stale trackers left for this IP, remove the key
+                    del stale_trackers[ip_address]
 
         if log_info:
             print(f"Received data from {ip_address} at {timestamp}")
