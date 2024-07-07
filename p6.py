@@ -61,7 +61,7 @@ def display_info():
         <title>PSN System Info and Trackers</title>
     </head>
     <body>
-        <h1>System Information</h1>
+        <h1>System Information and Trackers</h1>
         <table border="1">
             <tr>
                 <th>Source IP</th>
@@ -71,6 +71,8 @@ def display_info():
                 <th>Version Low</th>
                 <th>Frame ID</th>
                 <th>Frame Packet Count</th>
+                <th>Tracker ID</th>
+                <th>Tracker Name</th>
             </tr>
             {% for ip, system in sorted_systems_info.items() %}
             <tr>
@@ -81,29 +83,26 @@ def display_info():
                 <td>{{ system.version_low }}</td>
                 <td>{{ system.frame_id }}</td>
                 <td>{{ system.frame_packet_count }}</td>
+                <td></td>
+                <td></td>
             </tr>
+            {% if ip in sorted_trackers_list %}
+                {% for tracker in sorted_trackers_list[ip].values() %}
+                <tr>
+                    <td>{{ tracker.src_ip }}</td>
+                    <td>{{ tracker.server_name }}</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td>{{ tracker.tracker_id }}</td>
+                    <td>{{ tracker.tracker_name }}</td>
+                </tr>
+                {% endfor %}
+            {% endif %}
             {% endfor %}
         </table>
-        <h1>Available Trackers</h1>
-        {% for ip, trackers in sorted_trackers_list.items() %}
-        <h2>Trackers from {{ ip }}</h2>
-        <table border="1">
-            <tr>
-                <th>Tracker ID</th>
-                <th>Tracker Name</th>
-                <th>Server Name</th>
-                <th>IP Address</th>
-            </tr>
-            {% for tracker in trackers.values() %}
-            <tr>
-                <td>{{ tracker.tracker_id }}</td>
-                <td>{{ tracker.tracker_name }}</td>
-                <td>{{ tracker.server_name }}</td>
-                <td>{{ tracker.src_ip }}</td>
-            </tr>
-            {% endfor %}
-        </table>
-        {% endfor %}
     </body>
     </html>
     """
