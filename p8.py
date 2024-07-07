@@ -48,7 +48,8 @@ def callback_function(data):
                 'timestamp': timestamp
             }
             trackers_list[ip_address][tracker.tracker_id] = tracker_info
-
+# Create a receiver object with the callback function
+receiver = pypsn.receiver(callback_function)
 # Function to clean up stale entries
 def clean_stale_entries():
     global systems_info, trackers_list
