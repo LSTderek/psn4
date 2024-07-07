@@ -13,6 +13,7 @@ app = Flask(__name__)
 
 # Dictionary to store system information keyed by source IP
 systems_info = {}
+stale_systems = {}
 trackers_list = {}
 stale_trackers = {}
 
@@ -50,7 +51,7 @@ def bytes_to_str(b):
 
 # Define a callback function to handle the received PSN data
 def callback_function(data):
-    global systems_info, trackers_list, stale_trackers
+    global systems_info, trackers_list, stale_trackers, stale_systems
     if isinstance(data, pypsn.psn_info_packet):
         info = data.info
         ip_address = info.src_ip if hasattr(info, 'src_ip') else 'N/A'
@@ -66,6 +67,9 @@ def callback_function(data):
             'timestamp': timestamp
         }
         systems_info[ip_address] = system_info
+
+        if ip_address in stale_systems:
+            del stale_systems[ip_address]
 
         if ip_address not in trackers_list:
             trackers_list[ip_address] = {}
@@ -94,7 +98,7 @@ receiver = pypsn.receiver(callback_function)
 
 # Function to clean up stale entries
 def clean_stale_entries():
-    global systems_info, trackers_list, stale_trackers, system_info_cleanup_duration, trackers_cleanup_duration
+    global systems_info, stale_systems, trackers_list, stale_trackers, system_info_cleanup_duration, trackers_cleanup_duration
     while True:
         current_time = datetime.now()
         systems_to_delete = []
@@ -107,6 +111,7 @@ def clean_stale_entries():
                 systems_to_delete.append(ip)
 
         for ip in systems_to_delete:
+            stale_systems[ip] = systems_info[ip]
             del systems_info[ip]
 
         # Clean up trackers_list
@@ -131,6 +136,7 @@ def clean_stale_entries():
             print(f"Cleaned systems_info: {systems_info}")  # Debug print
             print(f"Cleaned trackers_list: {trackers_list}")  # Debug print
             print(f"Stale trackers: {stale_trackers}")  # Debug print
+            print(f"Stale systems: {stale_systems}")  # Debug print
 
         time.sleep(1)  # Run cleanup every second
 
@@ -138,6 +144,7 @@ def clean_stale_entries():
 @app.route('/combined_info', methods=['GET'])
 def combined_info():
     sorted_systems_info = dict(sorted(systems_info.items()))
+    sorted_stale_systems_info = dict(sorted(stale_systems.items()))
     sorted_trackers_list = []
     sorted_stale_trackers_list = []
 
@@ -169,6 +176,31 @@ def combined_info():
                 <th>Timestamp</th>
             </tr>
             {% for ip, system in sorted_systems_info.items() %}
+            <tr>
+                <td>{{ system.src_ip }}</td>
+                <td>{{ system.server_name }}</td>
+                <td>{{ system.packet_timestamp }}</td>
+                <td>{{ system.version_high }}</td>
+                <td>{{ system.version_low }}</td>
+                <td>{{ system.frame_id }}</td>
+                <td>{{ system.frame_packet_count }}</td>
+                <td>{{ system.timestamp }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        <h1>Stale Systems</h1>
+        <table border="1">
+            <tr>
+                <th>Source IP</th>
+                <th>Server Name</th>
+                <th>Packet Timestamp</th>
+                <th>Version High</th>
+                <th>Version Low</th>
+                <th>Frame ID</th>
+                <th>Frame Packet Count</th>
+                <th>Timestamp</th>
+            </tr>
+            {% for ip, system in sorted_stale_systems_info.items() %}
             <tr>
                 <td>{{ system.src_ip }}</td>
                 <td>{{ system.server_name }}</td>
@@ -225,6 +257,7 @@ def combined_info():
     return render_template_string(
         html_template, 
         sorted_systems_info=sorted_systems_info, 
+        sorted_stale_systems_info=sorted_stale_systems_info, 
         sorted_trackers_list=sorted_trackers_list, 
         sorted_stale_trackers_list=sorted_stale_trackers_list
     )
@@ -278,7 +311,7 @@ def display_info():
             <input type="submit" value="Update Settings">
         </form>
         <h1>Combined Information</h1>
-        <iframe id="combinedInfoFrame" src="/combined_info" width="100%" height="900px"></iframe>
+        <iframe id="combinedInfoFrame" src="/combined_info" width="100%" height="1200px"></iframe>
     </body>
     </html>
     """
@@ -300,15 +333,8 @@ def run_flask():
 # Start the receiver and Flask server in separate threads
 if __name__ == '__main__':
     try:
-        #     except KeyboardInterrupt:
-        if request.method == 'POST':
-            log_info = 'log_info' in request.form
-            log_debug = 'log_debug' in request.form
-            # Convert input from seconds to milliseconds for internal use if needed
-            system_info_refresh_rate = int(request.form.get('system_info_refresh_rate', 5))  # Default is now 5 seconds
-            trackers_refresh_rate = int(request.form.get('trackers_refresh_rate', 5))  # Default is now 5 seconds
-            system_info_cleanup_duration = int(request.form.get('system_info_cleanup_duration', 10))
-            trackers_cleanup_duration = int(request.form.get('trackers_cleanup_duration', 5))rint("Starting PSN receiver...")
+        # Start the receiver
+        print("Starting PSN receiver...")
         receiver_thread = Thread(target=receiver.start)
         receiver_thread.start()
 
