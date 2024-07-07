@@ -8,7 +8,7 @@ import socket
 # Initialize Flask app
 app = Flask(__name__)
 
-# Dictionary to store system information and tracker names
+# Dictionary to store system information keyed by source IP
 systems_info = {}
 trackers_list = []
 lock = Lock()
@@ -23,8 +23,7 @@ def callback_function(data):
     with lock:
         if isinstance(data, pypsn.psn_info_packet):
             info = data.info
-            ip_address = data.src_ip
-            print(f"Received data from {ip_address}")  # Debug print
+            ip_address = info.src_ip if hasattr(info, 'src_ip') else 'N/A'
             system_info = {
                 'server_name': bytes_to_str(data.name),
                 'packet_timestamp': info.timestamp,
@@ -46,8 +45,6 @@ def callback_function(data):
                 }
                 for tracker in data.trackers
             ]
-            print(f"System Info: {systems_info}")  # Debug print
-            print(f"Trackers List: {trackers_list}")  # Debug print
 
 # Custom psn_receiver class to capture IP address of incoming packets
 class psn_receiver(Thread):
@@ -63,7 +60,7 @@ class psn_receiver(Thread):
             data, addr = self.sock.recvfrom(1024)
             ip_address = addr[0]
             psn_data = self.parse_data(data)
-            psn_data.ip_address = ip_address  # Add the IP address to the data object
+            psn_data.info.src_ip = ip_address  # Add the IP address to the data object
             self.callback(psn_data)
 
     def parse_data(self, data):
@@ -73,15 +70,6 @@ class psn_receiver(Thread):
     def stop(self):
         self.running = False
         self.sock.close()
-
-# Function to clean up stale sources
-def clean_stale_sources(duration):
-    global systems_info
-    while True:
-        time.sleep(duration)
-        current_time = time.time()
-        with lock:
-            systems_info = {ip: info for ip, info in systems_info.items() if current_time - info['last_update'] <= duration}
 
 # Define route to display system info and available trackers in tables
 @app.route('/', methods=['GET'])
@@ -98,7 +86,6 @@ def display_info():
             <tr>
                 <th>Source IP</th>
                 <th>Server Name</th>
-                <th>IP Address</th>
                 <th>Packet Timestamp</th>
                 <th>Version High</th>
                 <th>Version Low</th>
@@ -109,7 +96,6 @@ def display_info():
             <tr>
                 <td>{{ system.src_ip }}</td>
                 <td>{{ system.server_name }}</td>
-                <td>{{ system.src_ip }}</td>
                 <td>{{ system.packet_timestamp }}</td>
                 <td>{{ system.version_high }}</td>
                 <td>{{ system.version_low }}</td>
@@ -149,9 +135,6 @@ def run_flask():
 # Start the receiver and Flask server in separate threads
 if __name__ == '__main__':
     try:
-        # User-definable duration for stale source cleanup (in seconds)
-        stale_duration = 60
-
         # Initialize the receiver
         receiver = psn_receiver(callback_function)
 
@@ -159,10 +142,6 @@ if __name__ == '__main__':
         print("Starting PSN receiver...")
         receiver_thread = Thread(target=receiver.start)
         receiver_thread.start()
-
-        # Start the stale source cleaner
-        cleaner_thread = Thread(target=clean_stale_sources, args=(stale_duration,))
-        cleaner_thread.start()
 
         # Start Flask server
         flask_thread = Thread(target=run_flask)
@@ -172,14 +151,13 @@ if __name__ == '__main__':
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        print("Stopping receiver, cleaner, and Flask server...")
+        print("Stopping receiver and Flask server...")
 
         # Stop the receiver
         receiver.stop()
 
         # Wait for threads to finish
         receiver_thread.join()
-        cleaner_thread.join()
         flask_thread.join()
 
         print("Stopped.")
