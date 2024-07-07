@@ -1,7 +1,7 @@
 # Import necessary modules
 import pypsn
 from flask import Flask, render_template_string, request
-from threading import Thread
+from threading import Thread, Event
 import time
 import socket
 from datetime import datetime
@@ -98,9 +98,9 @@ def callback_function(data):
 receiver = pypsn.receiver(callback_function)
 
 # Function to clean up stale entries
-def clean_stale_entries():
+def clean_stale_entries(stop_event):
     global systems_info, stale_systems, trackers_list, stale_trackers, system_info_cleanup_duration, trackers_cleanup_duration
-    while True:
+    while not stop_event.is_set():
         current_time = datetime.now()
         systems_to_delete = []
         trackers_to_delete = {}
@@ -139,7 +139,7 @@ def clean_stale_entries():
             print(f"Stale trackers: {stale_trackers}")  # Debug print
             print(f"Stale systems: {stale_systems}")  # Debug print
 
-        time.sleep(1)  # Run cleanup every second
+        stop_event.wait(1)  # Run cleanup every second
 
 # Define route to display combined system info, active trackers, and stale trackers
 @app.route('/combined_info', methods=['GET'])
@@ -344,13 +344,15 @@ class ServerThread(Thread):
 # Start the receiver and Flask server in separate threads
 if __name__ == '__main__':
     try:
+        stop_event = Event()
+
         # Start the receiver
         print("Starting PSN receiver...")
         receiver_thread = Thread(target=receiver.start)
         receiver_thread.start()
 
         # Start the stale entry cleaner
-        cleaner_thread = Thread(target=clean_stale_entries)
+        cleaner_thread = Thread(target=clean_stale_entries, args=(stop_event,))
         cleaner_thread.start()
 
         # Start Flask server
@@ -362,6 +364,9 @@ if __name__ == '__main__':
             time.sleep(1)
     except KeyboardInterrupt:
         print("Stopping receiver, cleaner, and Flask server...")
+
+        # Signal the cleaner thread to stop
+        stop_event.set()
 
         # Stop the receiver
         receiver.stop()
