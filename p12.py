@@ -3,7 +3,6 @@ import pypsn
 from flask import Flask, render_template_string, request
 from threading import Thread, Event
 import time
-import socket
 from datetime import datetime
 import json
 import os
