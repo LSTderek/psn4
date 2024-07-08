@@ -86,9 +86,9 @@ def callback_function(data):
                 'tracker_id': tracker.id,  # Assuming 'id' is the correct attribute
                 'src_ip': ip_address,
                 'timestamp': timestamp,
-                'pos_x': round(tracker.position.x, 3),
-                'pos_y': round(tracker.position.y, 3),
-                'pos_z': round(tracker.position.z, 3)
+                'pos_x': round(tracker.pos.x, 3),
+                'pos_y': round(tracker.pos.y, 3),
+                'pos_z': round(tracker.pos.z, 3)
             }
             trackers_list[ip_address][tracker.id] = tracker_info
 
