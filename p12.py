@@ -68,7 +68,8 @@ def callback_function(data):
             'trackers': {
                 tracker.tracker_id: bytes_to_str(tracker.tracker_name)
                 for tracker in data.trackers
-            }
+            },
+            'tracker_count': len(data.trackers)
         }
         systems_info[ip_address] = system_info
 
@@ -174,6 +175,7 @@ def combined_info():
                 <th>Frame ID</th>
                 <th>Frame Packet Count</th>
                 <th>Timestamp</th>
+                <th>Tracker Count</th>
             </tr>
             {% for ip, system in sorted_systems_info.items() %}
             <tr>
@@ -185,6 +187,7 @@ def combined_info():
                 <td>{{ system.frame_id }}</td>
                 <td>{{ system.frame_packet_count }}</td>
                 <td>{{ system.timestamp }}</td>
+                <td>{{ system.tracker_count }}</td>
             </tr>
             {% endfor %}
         </table>
@@ -199,6 +202,7 @@ def combined_info():
                 <th>Frame ID</th>
                 <th>Frame Packet Count</th>
                 <th>Timestamp</th>
+                <th>Tracker Count</th>
             </tr>
             {% for ip, system in sorted_stale_systems_info.items() %}
             <tr>
@@ -210,6 +214,7 @@ def combined_info():
                 <td>{{ system.frame_id }}</td>
                 <td>{{ system.frame_packet_count }}</td>
                 <td>{{ system.timestamp }}</td>
+                <td>{{ system.tracker_count }}</td>
             </tr>
             {% endfor %}
         </table>
