@@ -347,7 +347,7 @@ def display_info():
 class ServerThread(Thread):
     def __init__(self, app):
         Thread.__init__(self)
-        self.server = make_server('0.0.0.0', 5001, app)  # Changed port to 5001
+        self.server = make_server('0.0.0.0', 5000, app)  # Changed port to 5001
         self.ctx = app.app_context()
         self.ctx.push()
 
