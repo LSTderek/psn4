@@ -90,7 +90,7 @@ def callback_function(data):
         for tracker in data.trackers:
             tracker_key = f"{tracker.src_ip}_{tracker.id}"  # Unique key combining IP and tracker ID
             tracker_info = {
-                'tracker_id': tracker.tracker_id,
+                'tracker_id': tracker.id,
                 'src_ip': tracker.src_ip,
                 'timestamp': timestamp,
                 'pos_x': round(tracker.pos.x, 3),
