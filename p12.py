@@ -86,9 +86,9 @@ def callback_function(data):
                 'tracker_id': tracker.id,  # Assuming 'id' is the correct attribute
                 'src_ip': tracker.src_ip,
                 'timestamp': timestamp,
-                'pos_x': tracker.pos.x,
-                'pos_y': tracker.pos.y,
-                'pos_z': tracker.pos.z
+                'pos_x': round(tracker.pos.x, 3),
+                'pos_y': round(tracker.pos.y, 3),
+                'pos_z': round(tracker.pos.z, 3)
             }
             trackers_list[ip_address][tracker.id] = tracker_info
 
@@ -225,8 +225,6 @@ def combined_info():
         <table border="1">
             <tr>
                 <th>Tracker ID</th>
-                <th>Tracker Name</th>
-                <th>Server Name</th>
                 <th>IP Address</th>
                 <th>Pos X</th>
                 <th>Pos Y</th>
@@ -236,8 +234,6 @@ def combined_info():
             {% for tracker in sorted_trackers_list %}
             <tr>
                 <td>{{ tracker.tracker_id }}</td>
-                <td>{{ tracker.tracker_name }}</td>
-                <td>{{ tracker.server_name }}</td>
                 <td>{{ tracker.src_ip }}</td>
                 <td>{{ tracker.pos_x }}</td>
                 <td>{{ tracker.pos_y }}</td>
@@ -250,8 +246,6 @@ def combined_info():
         <table border="1">
             <tr>
                 <th>Tracker ID</th>
-                <th>Tracker Name</th>
-                <th>Server Name</th>
                 <th>IP Address</th>
                 <th>Pos X</th>
                 <th>Pos Y</th>
@@ -261,8 +255,6 @@ def combined_info():
             {% for tracker in sorted_stale_trackers_list %}
             <tr>
                 <td>{{ tracker.tracker_id }}</td>
-                <td>{{ tracker.tracker_name }}</td>
-                <td>{{ tracker.server_name }}</td>
                 <td>{{ tracker.src_ip }}</td>
                 <td>{{ tracker.pos_x }}</td>
                 <td>{{ tracker.pos_y }}</td>
@@ -345,7 +337,7 @@ def display_info():
 class ServerThread(Thread):
     def __init__(self, app):
         Thread.__init__(self)
-        self.server = make_server('0.0.0.0', 5000, app)  # Changed port to 5001
+        self.server = make_server('0.0.0.0', 5001, app)  # Changed port to 5001
         self.ctx = app.app_context()
         self.ctx.push()
 
