@@ -78,6 +78,7 @@ class psn_data_packet:
     def __init__(self, info: "psn_info", trackers: List["psn_tracker"]):
         self.info = info
         self.trackers = trackers
+        self.src_ip = trackers[0].src_ip  # Initialize src_ip
 
 
 class psn_info_packet:

@@ -79,7 +79,7 @@ def callback_function(data):
         ip_address = data.src_ip if hasattr(data, 'src_ip') else 'N/A'
         
         for tracker in data.trackers:
-            tracker_key = f"{ip_address}_{tracker.id}"  # Unique key combining IP and tracker ID
+            tracker_key = f"{tracker.src_ip}_{tracker.id}"  # Unique key combining IP and tracker ID
             tracker_info = {
                 'tracker_id': tracker.id,
                 'src_ip': tracker.src_ip,
