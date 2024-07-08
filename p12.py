@@ -340,4 +340,60 @@ def display_info():
         log_debug=log_debug, 
         page_auto_refresh_rate=page_auto_refresh_rate, 
         system_info_cleanup_duration=system_info_cleanup_duration, 
-        trackers_cleanup_duration
+        trackers_cleanup_duration=trackers_cleanup_duration
+    )
+
+# Function to run Flask app
+class ServerThread(Thread):
+    def __init__(self, app):
+        Thread.__init__(self)
+        self.server = make_server('0.0.0.0', 5001, app)  # Changed port to 5001
+        self.ctx = app.app_context()
+        self.ctx.push()
+
+    def run(self):
+        print("Starting Flask server...")
+        self.server.serve_forever()
+
+    def shutdown(self):
+        self.server.shutdown()
+
+# Start the receiver and Flask server in separate threads
+if __name__ == '__main__':
+    try:
+        stop_event = Event()
+
+        # Start the receiver
+        print("Starting PSN receiver...")
+        receiver_thread = Thread(target=receiver.start)
+        receiver_thread.start()
+
+        # Start the stale entry cleaner
+        cleaner_thread = Thread(target=clean_stale_entries, args=(stop_event,))
+        cleaner_thread.start()
+
+        # Start Flask server
+        server_thread = ServerThread(app)
+        server_thread.start()
+
+        # Keep the main thread alive
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print("Stopping receiver, cleaner, and Flask server...")
+
+        # Signal the cleaner thread to stop
+        stop_event.set()
+
+        # Stop the receiver
+        receiver.stop()
+
+        # Stop Flask server
+        server_thread.shutdown()
+
+        # Wait for threads to finish
+        receiver_thread.join()
+        cleaner_thread.join()
+        server_thread.join()
+
+        print("Stopped.")
