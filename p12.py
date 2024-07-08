@@ -83,8 +83,10 @@ def callback_function(data):
         
         if ip_address in systems_info:
             system_trackers = systems_info[ip_address].get('trackers', {})
+            system_name = systems_info[ip_address].get('server_name', 'Unknown')
         else:
             system_trackers = {}
+            system_name = 'Unknown'
 
         for tracker in data.trackers:
             tracker_key = f"{tracker.src_ip}_{tracker.id}"  # Unique key combining IP and tracker ID
@@ -95,7 +97,8 @@ def callback_function(data):
                 'pos_x': round(tracker.pos.x, 3),
                 'pos_y': round(tracker.pos.y, 3),
                 'pos_z': round(tracker.pos.z, 3),
-                'tracker_name': system_trackers.get(tracker.id, 'Unknown')
+                'tracker_name': system_trackers.get(tracker.id, 'Unknown'),
+                'system_name': system_name
             }
             trackers_list[tracker_key] = tracker_info
 
@@ -216,6 +219,7 @@ def combined_info():
                 <th>Tracker ID</th>
                 <th>IP Address</th>
                 <th>Tracker Name</th>
+                <th>System Name</th>
                 <th>Pos X</th>
                 <th>Pos Y</th>
                 <th>Pos Z</th>
@@ -226,6 +230,7 @@ def combined_info():
                 <td>{{ tracker.tracker_id }}</td>
                 <td>{{ tracker.src_ip }}</td>
                 <td>{{ tracker.tracker_name }}</td>
+                <td>{{ tracker.system_name }}</td>
                 <td>{{ tracker.pos_x }}</td>
                 <td>{{ tracker.pos_y }}</td>
                 <td>{{ tracker.pos_z }}</td>
@@ -239,6 +244,7 @@ def combined_info():
                 <th>Tracker ID</th>
                 <th>IP Address</th>
                 <th>Tracker Name</th>
+                <th>System Name</th>
                 <th>Pos X</th>
                 <th>Pos Y</th>
                 <th>Pos Z</th>
@@ -249,6 +255,7 @@ def combined_info():
                 <td>{{ tracker.tracker_id }}</td>
                 <td>{{ tracker.src_ip }}</td>
                 <td>{{ tracker.tracker_name }}</td>
+                <td>{{ tracker.system_name }}</td>
                 <td>{{ tracker.pos_x }}</td>
                 <td>{{ tracker.pos_y }}</td>
                 <td>{{ tracker.pos_z }}</td>
