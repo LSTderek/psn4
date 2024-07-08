@@ -67,7 +67,7 @@ def callback_function(data):
             'src_ip': ip_address,
             'timestamp': timestamp,
             'trackers': {
-                tracker.id: bytes_to_str(tracker.tracker_name)
+                tracker.tracker_id: bytes_to_str(tracker.tracker_name)
                 for tracker in data.trackers
             }
         }
