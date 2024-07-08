@@ -76,7 +76,7 @@ def callback_function(data):
             print(f"Received system info from {ip_address} at {timestamp}")
     
     elif isinstance(data, pypsn.psn_data_packet):
-        ip_address = data.src_ip if hasattr(data, 'src_ip') else 'N/A'
+        ip_address = data.trackers.tracker[0].src_ip if hasattr(data, 'src_ip') else 'N/A'
         
         for tracker in data.trackers:
             tracker_key = f"{tracker.src_ip}_{tracker.id}"  # Unique key combining IP and tracker ID
