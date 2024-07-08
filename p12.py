@@ -88,7 +88,7 @@ def callback_function(data):
             system_trackers = {}
 
         for tracker in data.trackers:
-            tracker_key = f"{tracker.src_ip}_{tracker.tracker_id}"  # Unique key combining IP and tracker ID
+            tracker_key = f"{tracker.src_ip}_{tracker.id}"  # Unique key combining IP and tracker ID
             tracker_info = {
                 'tracker_id': tracker.tracker_id,
                 'src_ip': tracker.src_ip,
@@ -331,7 +331,7 @@ def display_info():
 class ServerThread(Thread):
     def __init__(self, app):
         Thread.__init__(self)
-        self.server = make_server('0.0.0.0', 5003, app)
+        self.server = make_server('0.0.0.0', 5002, app)
         self.ctx = app.app_context()
         self.ctx.push()
 
