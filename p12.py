@@ -96,7 +96,7 @@ def callback_function(data):
                 'pos_x': round(tracker.pos.x, 3),
                 'pos_y': round(tracker.pos.y, 3),
                 'pos_z': round(tracker.pos.z, 3),
-                'tracker_name': system_trackers.get(tracker.tracker_id, 'Unknown')
+                'tracker_name': system_trackers.get(tracker.id, 'Unknown')
             }
             trackers_list[tracker_key] = tracker_info
 
