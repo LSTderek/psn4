@@ -84,11 +84,11 @@ def callback_function(data):
         for tracker in data.trackers:
             tracker_info = {
                 'tracker_id': tracker.id,  # Assuming 'id' is the correct attribute
-                'src_ip': tracker.src_ip,
+                'src_ip': ip_address,
                 'timestamp': timestamp,
-                'pos_x': round(tracker.pos.x, 3),
-                'pos_y': round(tracker.pos.y, 3),
-                'pos_z': round(tracker.pos.z, 3)
+                'pos_x': round(tracker.position.x, 3),
+                'pos_y': round(tracker.position.y, 3),
+                'pos_z': round(tracker.position.z, 3)
             }
             trackers_list[ip_address][tracker.id] = tracker_info
 
@@ -337,7 +337,7 @@ def display_info():
 class ServerThread(Thread):
     def __init__(self, app):
         Thread.__init__(self)
-        self.server = make_server('0.0.0.0', 5001, app)  # Changed port to 5001
+        self.server = make_server('0.0.0.0', 5000, app)
         self.ctx = app.app_context()
         self.ctx.push()
 
