@@ -78,25 +78,21 @@ def callback_function(data):
     elif isinstance(data, pypsn.psn_data_packet):
         ip_address = data.src_ip if hasattr(data, 'src_ip') else 'N/A'
         
-        if ip_address not in trackers_list:
-            trackers_list[ip_address] = {}
-
         for tracker in data.trackers:
+            tracker_key = f"{ip_address}_{tracker.id}"  # Unique key combining IP and tracker ID
             tracker_info = {
-                'tracker_id': tracker.id,  # Assuming 'id' is the correct attribute
-                'src_ip': tracker.src_ip,
+                'tracker_id': tracker.id,
+                'src_ip': ip_address,
                 'timestamp': timestamp,
                 'pos_x': round(tracker.pos.x, 3),
                 'pos_y': round(tracker.pos.y, 3),
                 'pos_z': round(tracker.pos.z, 3)
             }
-            trackers_list[ip_address][tracker.id] = tracker_info
+            trackers_list[tracker_key] = tracker_info
 
             # Remove the tracker from stale_trackers if it is being updated
-            if ip_address in stale_trackers and tracker.id in stale_trackers[ip_address]:
-                del stale_trackers[ip_address][tracker.id]
-                if not stale_trackers[ip_address]:  # If no stale trackers left for this IP, remove the key
-                    del stale_trackers[ip_address]
+            if tracker_key in stale_trackers:
+                del stale_trackers[tracker_key]
 
         if log_info:
             print(f"Received tracker data from {ip_address} at {timestamp}")
@@ -110,7 +106,7 @@ def clean_stale_entries(stop_event):
     while not stop_event.is_set():
         current_time = datetime.now()
         systems_to_delete = []
-        trackers_to_delete = {}
+        trackers_to_delete = []
 
         # Clean up systems_info
         for ip, system in systems_info.items():
@@ -123,22 +119,14 @@ def clean_stale_entries(stop_event):
             del systems_info[ip]
 
         # Clean up trackers_list
-        for ip, trackers in trackers_list.items():
-            for tracker_id, tracker in trackers.items():
-                tracker_timestamp = datetime.strptime(tracker['timestamp'], '%Y-%m-%d %H:%M:%S')
-                if (current_time - tracker_timestamp).total_seconds() > trackers_cleanup_duration:
-                    if ip not in trackers_to_delete:
-                        trackers_to_delete[ip] = []
-                    trackers_to_delete[ip].append(tracker_id)
+        for tracker_key, tracker in trackers_list.items():
+            tracker_timestamp = datetime.strptime(tracker['timestamp'], '%Y-%m-%d %H:%M:%S')
+            if (current_time - tracker_timestamp).total_seconds() > trackers_cleanup_duration:
+                trackers_to_delete.append(tracker_key)
 
-        for ip, tracker_ids in trackers_to_delete.items():
-            for tracker_id in tracker_ids:
-                if ip not in stale_trackers:
-                    stale_trackers[ip] = {}
-                stale_trackers[ip][tracker_id] = trackers_list[ip][tracker_id]
-                del trackers_list[ip][tracker_id]
-            if not trackers_list[ip]:  # If no trackers left for this IP, remove the key
-                del trackers_list[ip]
+        for tracker_key in trackers_to_delete:
+            stale_trackers[tracker_key] = trackers_list[tracker_key]
+            del trackers_list[tracker_key]
 
         if log_debug:
             print(f"Cleaned systems_info: {systems_info}")  # Debug print
@@ -153,16 +141,8 @@ def clean_stale_entries(stop_event):
 def combined_info():
     sorted_systems_info = dict(sorted(systems_info.items()))
     sorted_stale_systems_info = dict(sorted(stale_systems.items()))
-    sorted_trackers_list = []
-    sorted_stale_trackers_list = []
-
-    for ip in sorted(trackers_list.keys()):
-        for tracker_id in sorted(trackers_list[ip].keys()):
-            sorted_trackers_list.append(trackers_list[ip][tracker_id])
-
-    for ip in sorted(stale_trackers.keys()):
-        for tracker_id in sorted(stale_trackers[ip].keys()):
-            sorted_stale_trackers_list.append(stale_trackers[ip][tracker_id])
+    sorted_trackers_list = list(trackers_list.values())
+    sorted_stale_trackers_list = list(stale_trackers.values())
 
     html_template = """
     <!DOCTYPE html>
