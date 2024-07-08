@@ -89,7 +89,7 @@ def callback_function(data):
             system_trackers = {}
 
         for tracker in data.trackers:
-            tracker_key = f"{tracker.src_ip}_{tracker.tracker_id}"  # Unique key combining IP and tracker ID
+            tracker_key = f"{tracker.src_ip}_{tracker.id}"  # Unique key combining IP and tracker ID
             tracker_info = {
                 'tracker_id': tracker.tracker_id,
                 'src_ip': tracker.src_ip,
@@ -110,7 +110,7 @@ def callback_function(data):
                 'trgtpos_y': round(tracker.trgtpos.y, 3),
                 'trgtpos_z': round(tracker.trgtpos.z, 3),
                 'status': tracker.status,
-                'tracker_name': system_trackers.get(tracker.tracker_id, 'Unknown'),
+                'tracker_name': system_trackers.get(tracker.id, 'Unknown'),
                 'server_name': systems_info[ip_address]['server_name']
             }
             trackers_list[tracker_key] = tracker_info
