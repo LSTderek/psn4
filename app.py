@@ -68,7 +68,7 @@ def callback_function(data):
             'timestamp': timestamp,
             'tracker_count': len(data.trackers),
             'trackers': {
-                tracker.id: bytes_to_str(tracker.tracker_name)
+                tracker.tracker_id: bytes_to_str(tracker.tracker_name)
                 for tracker in data.trackers
             }
         }
