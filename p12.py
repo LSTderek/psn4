@@ -20,11 +20,11 @@ stale_trackers = {}
 
 # Default settings
 default_config = {
-    'log_info': True,
+    'log_info': False,
     'log_debug': False,
-    'page_auto_refresh_rate': 5,  # in seconds
-    'system_info_cleanup_duration': 10,  # in seconds
-    'trackers_cleanup_duration': 5  # in seconds
+    'page_auto_refresh_rate': 1,  # in seconds
+    'system_info_cleanup_duration': 3,  # in seconds
+    'trackers_cleanup_duration': 1  # in seconds
 }
 
 # Load or create config file
@@ -331,7 +331,7 @@ def display_info():
 class ServerThread(Thread):
     def __init__(self, app):
         Thread.__init__(self)
-        self.server = make_server('0.0.0.0', 5000, app)
+        self.server = make_server('0.0.0.0', 5002, app)
         self.ctx = app.app_context()
         self.ctx.push()
 
