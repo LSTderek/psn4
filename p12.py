@@ -99,7 +99,20 @@ def callback_function(data):
                 'pos_y': round(tracker.pos.y, 3),
                 'pos_z': round(tracker.pos.z, 3),
                 'tracker_name': system_trackers.get(tracker.id, 'Unknown'),
-                'system_name': system_name
+                'system_name': system_name,
+                'speed_x': round(tracker.speed.x, 3) if hasattr(tracker.speed, 'x') else 'N/A',
+                'speed_y': round(tracker.speed.y, 3) if hasattr(tracker.speed, 'y') else 'N/A',
+                'speed_z': round(tracker.speed.z, 3) if hasattr(tracker.speed, 'z') else 'N/A',
+                'ori_x': round(tracker.ori.x, 3) if hasattr(tracker.ori, 'x') else 'N/A',
+                'ori_y': round(tracker.ori.y, 3) if hasattr(tracker.ori, 'y') else 'N/A',
+                'ori_z': round(tracker.ori.z, 3) if hasattr(tracker.ori, 'z') else 'N/A',
+                'accel_x': round(tracker.accel.x, 3) if hasattr(tracker.accel, 'x') else 'N/A',
+                'accel_y': round(tracker.accel.y, 3) if hasattr(tracker.accel, 'y') else 'N/A',
+                'accel_z': round(tracker.accel.z, 3) if hasattr(tracker.accel, 'z') else 'N/A',
+                'trgtpos_x': round(tracker.trgtpos.x, 3) if hasattr(tracker.trgtpos, 'x') else 'N/A',
+                'trgtpos_y': round(tracker.trgtpos.y, 3) if hasattr(tracker.trgtpos, 'y') else 'N/A',
+                'trgtpos_z': round(tracker.trgtpos.z, 3) if hasattr(tracker.trgtpos, 'z') else 'N/A',
+                'status': tracker.status if hasattr(tracker, 'status') else 'N/A'
             }
             trackers_list[tracker_key] = tracker_info
 
@@ -221,13 +234,26 @@ def combined_info():
         <h1>Available Trackers</h1>
         <table border="1">
             <tr>
-                <th>IP Address</th>
+                <th>Source IP</th>
                 <th>Server Name</th>
                 <th>Tracker ID</th>
                 <th>Tracker Name</th>
                 <th>Pos X</th>
                 <th>Pos Y</th>
                 <th>Pos Z</th>
+                <th>Speed X</th>
+                <th>Speed Y</th>
+                <th>Speed Z</th>
+                <th>Ori X</th>
+                <th>Ori Y</th>
+                <th>Ori Z</th>
+                <th>Accel X</th>
+                <th>Accel Y</th>
+                <th>Accel Z</th>
+                <th>Trgtpos X</th>
+                <th>Trgtpos Y</th>
+                <th>Trgtpos Z</th>
+                <th>Status</th>
                 <th>Timestamp</th>
             </tr>
             {% for tracker in sorted_trackers_list %}
@@ -239,6 +265,19 @@ def combined_info():
                 <td>{{ tracker.pos_x }}</td>
                 <td>{{ tracker.pos_y }}</td>
                 <td>{{ tracker.pos_z }}</td>
+                <td>{{ tracker.speed_x }}</td>
+                <td>{{ tracker.speed_y }}</td>
+                <td>{{ tracker.speed_z }}</td>
+                <td>{{ tracker.ori_x }}</td>
+                <td>{{ tracker.ori_y }}</td>
+                <td>{{ tracker.ori_z }}</td>
+                <td>{{ tracker.accel_x }}</td>
+                <td>{{ tracker.accel_y }}</td>
+                <td>{{ tracker.accel_z }}</td>
+                <td>{{ tracker.trgtpos_x }}</td>
+                <td>{{ tracker.trgtpos_y }}</td>
+                <td>{{ tracker.trgtpos_z }}</td>
+                <td>{{ tracker.status }}</td>
                 <td>{{ tracker.timestamp }}</td>
             </tr>
             {% endfor %}
@@ -246,13 +285,26 @@ def combined_info():
         <h1>Stale Trackers</h1>
         <table border="1">
             <tr>
-                <th>IP Address</th>
+                <th>Source IP</th>
                 <th>Server Name</th>
                 <th>Tracker ID</th>
                 <th>Tracker Name</th>
                 <th>Pos X</th>
                 <th>Pos Y</th>
                 <th>Pos Z</th>
+                <th>Speed X</th>
+                <th>Speed Y</th>
+                <th>Speed Z</th>
+                <th>Ori X</th>
+                <th>Ori Y</th>
+                <th>Ori Z</th>
+                <th>Accel X</th>
+                <th>Accel Y</th>
+                <th>Accel Z</th>
+                <th>Trgtpos X</th>
+                <th>Trgtpos Y</th>
+                <th>Trgtpos Z</th>
+                <th>Status</th>
                 <th>Timestamp</th>
             </tr>
             {% for tracker in sorted_stale_trackers_list %}
@@ -264,6 +316,19 @@ def combined_info():
                 <td>{{ tracker.pos_x }}</td>
                 <td>{{ tracker.pos_y }}</td>
                 <td>{{ tracker.pos_z }}</td>
+                <td>{{ tracker.speed_x }}</td>
+                <td>{{ tracker.speed_y }}</td>
+                <td>{{ tracker.speed_z }}</td>
+                <td>{{ tracker.ori_x }}</td>
+                <td>{{ tracker.ori_y }}</td>
+                <td>{{ tracker.ori_z }}</td>
+                <td>{{ tracker.accel_x }}</td>
+                <td>{{ tracker.accel_y }}</td>
+                <td>{{ tracker.accel_z }}</td>
+                <td>{{ tracker.trgtpos_x }}</td>
+                <td>{{ tracker.trgtpos_y }}</td>
+                <td>{{ tracker.trgtpos_z }}</td>
+                <td>{{ tracker.status }}</td>
                 <td>{{ tracker.timestamp }}</td>
             </tr>
             {% endfor %}
