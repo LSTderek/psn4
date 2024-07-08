@@ -49,6 +49,7 @@ def bytes_to_str(b):
     return b.decode('utf-8') if isinstance(b, bytes) else b
 
 # Define a callback function to handle the received PSN data
+# Define a callback function to handle the received PSN data
 def callback_function(data):
     global systems_info, trackers_list, stale_trackers, stale_systems
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -66,7 +67,6 @@ def callback_function(data):
             'frame_packet_count': info.packet_count,
             'src_ip': ip_address,
             'timestamp': timestamp,
-            'tracker_count': len(data.trackers),
             'trackers': {
                 tracker.tracker_id: bytes_to_str(tracker.tracker_name)
                 for tracker in data.trackers
@@ -85,15 +85,13 @@ def callback_function(data):
         
         if ip_address in systems_info:
             system_trackers = systems_info[ip_address].get('trackers', {})
-            system_name = systems_info[ip_address]['server_name']
         else:
             system_trackers = {}
-            system_name = 'Unknown'
 
         for tracker in data.trackers:
-            tracker_key = f"{tracker.src_ip}_{tracker.id}"  # Unique key combining IP and tracker ID
+            tracker_key = f"{tracker.src_ip}_{tracker.tracker_id}"  # Unique key combining IP and tracker ID
             tracker_info = {
-                'tracker_id': tracker.id,
+                'tracker_id': tracker.tracker_id,
                 'src_ip': tracker.src_ip,
                 'timestamp': timestamp,
                 'pos_x': round(tracker.pos.x, 3),
@@ -112,8 +110,8 @@ def callback_function(data):
                 'trgtpos_y': round(tracker.trgtpos.y, 3),
                 'trgtpos_z': round(tracker.trgtpos.z, 3),
                 'status': tracker.status,
-                'tracker_name': system_trackers.get(tracker.id, 'Unknown'),
-                'system_name': system_name
+                'tracker_name': system_trackers.get(tracker.tracker_id, 'Unknown'),
+                'server_name': systems_info[ip_address]['server_name']
             }
             trackers_list[tracker_key] = tracker_info
 
