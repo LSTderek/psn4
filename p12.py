@@ -88,9 +88,9 @@ def callback_function(data):
                 'server_name': 'Unknown',  # Server name not available in data packet
                 'src_ip': ip_address,
                 'timestamp': timestamp,
-                'pos_x': tracker.position.x,
-                'pos_y': tracker.position.y,
-                'pos_z': tracker.position.z
+                'pos_x': tracker.pos.x,
+                'pos_y': tracker.pos.y,
+                'pos_z': tracker.pos.z
             }
             trackers_list[ip_address][tracker.id] = tracker_info
 
