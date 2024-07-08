@@ -84,7 +84,7 @@ def callback_function(data):
         for tracker in data.trackers:
             tracker_info = {
                 'tracker_id': tracker.id,  # Assuming 'id' is the correct attribute
-                'src_ip': ip_address,
+                'src_ip': tracker.src_ip,
                 'timestamp': timestamp,
                 'pos_x': round(tracker.pos.x, 3),
                 'pos_y': round(tracker.pos.y, 3),
