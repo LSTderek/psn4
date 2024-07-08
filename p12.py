@@ -169,25 +169,25 @@ def combined_info():
             <tr>
                 <th>Source IP</th>
                 <th>Server Name</th>
+                <th>Tracker Count</th>
                 <th>Packet Timestamp</th>
-                <th>Version High</th>
-                <th>Version Low</th>
                 <th>Frame ID</th>
                 <th>Frame Packet Count</th>
+                <th>Version High</th>
+                <th>Version Low</th>
                 <th>Timestamp</th>
-                <th>Tracker Count</th>
             </tr>
             {% for ip, system in sorted_systems_info.items() %}
             <tr>
                 <td>{{ system.src_ip }}</td>
                 <td>{{ system.server_name }}</td>
+                <td>{{ system.tracker_count }}</td>
                 <td>{{ system.packet_timestamp }}</td>
-                <td>{{ system.version_high }}</td>
-                <td>{{ system.version_low }}</td>
                 <td>{{ system.frame_id }}</td>
                 <td>{{ system.frame_packet_count }}</td>
+                <td>{{ system.version_high }}</td>
+                <td>{{ system.version_low }}</td>
                 <td>{{ system.timestamp }}</td>
-                <td>{{ system.tracker_count }}</td>
             </tr>
             {% endfor %}
         </table>
@@ -196,35 +196,35 @@ def combined_info():
             <tr>
                 <th>Source IP</th>
                 <th>Server Name</th>
+                <th>Tracker Count</th>
                 <th>Packet Timestamp</th>
-                <th>Version High</th>
-                <th>Version Low</th>
                 <th>Frame ID</th>
                 <th>Frame Packet Count</th>
+                <th>Version High</th>
+                <th>Version Low</th>
                 <th>Timestamp</th>
-                <th>Tracker Count</th>
             </tr>
             {% for ip, system in sorted_stale_systems_info.items() %}
             <tr>
                 <td>{{ system.src_ip }}</td>
                 <td>{{ system.server_name }}</td>
+                <td>{{ system.tracker_count }}</td>
                 <td>{{ system.packet_timestamp }}</td>
-                <td>{{ system.version_high }}</td>
-                <td>{{ system.version_low }}</td>
                 <td>{{ system.frame_id }}</td>
                 <td>{{ system.frame_packet_count }}</td>
+                <td>{{ system.version_high }}</td>
+                <td>{{ system.version_low }}</td>
                 <td>{{ system.timestamp }}</td>
-                <td>{{ system.tracker_count }}</td>
             </tr>
             {% endfor %}
         </table>
         <h1>Available Trackers</h1>
         <table border="1">
             <tr>
-                <th>Tracker ID</th>
                 <th>IP Address</th>
+                <th>Server Name</th>
+                <th>Tracker ID</th>
                 <th>Tracker Name</th>
-                <th>System Name</th>
                 <th>Pos X</th>
                 <th>Pos Y</th>
                 <th>Pos Z</th>
@@ -232,10 +232,10 @@ def combined_info():
             </tr>
             {% for tracker in sorted_trackers_list %}
             <tr>
-                <td>{{ tracker.tracker_id }}</td>
                 <td>{{ tracker.src_ip }}</td>
-                <td>{{ tracker.tracker_name }}</td>
                 <td>{{ tracker.system_name }}</td>
+                <td>{{ tracker.tracker_id }}</td>
+                <td>{{ tracker.tracker_name }}</td>
                 <td>{{ tracker.pos_x }}</td>
                 <td>{{ tracker.pos_y }}</td>
                 <td>{{ tracker.pos_z }}</td>
@@ -246,10 +246,10 @@ def combined_info():
         <h1>Stale Trackers</h1>
         <table border="1">
             <tr>
-                <th>Tracker ID</th>
                 <th>IP Address</th>
+                <th>Server Name</th>
+                <th>Tracker ID</th>
                 <th>Tracker Name</th>
-                <th>System Name</th>
                 <th>Pos X</th>
                 <th>Pos Y</th>
                 <th>Pos Z</th>
@@ -257,10 +257,10 @@ def combined_info():
             </tr>
             {% for tracker in sorted_stale_trackers_list %}
             <tr>
-                <td>{{ tracker.tracker_id }}</td>
                 <td>{{ tracker.src_ip }}</td>
-                <td>{{ tracker.tracker_name }}</td>
                 <td>{{ tracker.system_name }}</td>
+                <td>{{ tracker.tracker_id }}</td>
+                <td>{{ tracker.tracker_name }}</td>
                 <td>{{ tracker.pos_x }}</td>
                 <td>{{ tracker.pos_y }}</td>
                 <td>{{ tracker.pos_z }}</td>
