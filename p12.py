@@ -65,7 +65,11 @@ def callback_function(data):
             'frame_id': info.frame_id,
             'frame_packet_count': info.packet_count,
             'src_ip': ip_address,
-            'timestamp': timestamp
+            'timestamp': timestamp,
+            'trackers': {
+                tracker.id: bytes_to_str(tracker.tracker_name)
+                for tracker in data.trackers
+            }
         }
         systems_info[ip_address] = system_info
 
@@ -78,15 +82,21 @@ def callback_function(data):
     elif isinstance(data, pypsn.psn_data_packet):
         ip_address = data.src_ip if hasattr(data, 'src_ip') else 'N/A'
         
+        if ip_address in systems_info:
+            system_trackers = systems_info[ip_address].get('trackers', {})
+        else:
+            system_trackers = {}
+
         for tracker in data.trackers:
             tracker_key = f"{tracker.src_ip}_{tracker.id}"  # Unique key combining IP and tracker ID
             tracker_info = {
                 'tracker_id': tracker.id,
-                'src_ip': tracker.src_ip,
+                'src_ip': ip_address,
                 'timestamp': timestamp,
                 'pos_x': round(tracker.pos.x, 3),
                 'pos_y': round(tracker.pos.y, 3),
-                'pos_z': round(tracker.pos.z, 3)
+                'pos_z': round(tracker.pos.z, 3),
+                'tracker_name': system_trackers.get(tracker.id, 'Unknown')
             }
             trackers_list[tracker_key] = tracker_info
 
@@ -206,6 +216,7 @@ def combined_info():
             <tr>
                 <th>Tracker ID</th>
                 <th>IP Address</th>
+                <th>Tracker Name</th>
                 <th>Pos X</th>
                 <th>Pos Y</th>
                 <th>Pos Z</th>
@@ -215,6 +226,7 @@ def combined_info():
             <tr>
                 <td>{{ tracker.tracker_id }}</td>
                 <td>{{ tracker.src_ip }}</td>
+                <td>{{ tracker.tracker_name }}</td>
                 <td>{{ tracker.pos_x }}</td>
                 <td>{{ tracker.pos_y }}</td>
                 <td>{{ tracker.pos_z }}</td>
@@ -227,6 +239,7 @@ def combined_info():
             <tr>
                 <th>Tracker ID</th>
                 <th>IP Address</th>
+                <th>Tracker Name</th>
                 <th>Pos X</th>
                 <th>Pos Y</th>
                 <th>Pos Z</th>
@@ -236,6 +249,7 @@ def combined_info():
             <tr>
                 <td>{{ tracker.tracker_id }}</td>
                 <td>{{ tracker.src_ip }}</td>
+                <td>{{ tracker.tracker_name }}</td>
                 <td>{{ tracker.pos_x }}</td>
                 <td>{{ tracker.pos_y }}</td>
                 <td>{{ tracker.pos_z }}</td>
@@ -317,7 +331,7 @@ def display_info():
 class ServerThread(Thread):
     def __init__(self, app):
         Thread.__init__(self)
-        self.server = make_server('0.0.0.0', 5001, app)
+        self.server = make_server('0.0.0.0', 5000, app)
         self.ctx = app.app_context()
         self.ctx.push()
 
