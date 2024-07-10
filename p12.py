@@ -80,8 +80,11 @@ def callback_function(data):
             print(f"Received system info from {ip_address} at {timestamp}")
     
     elif isinstance(data, pypsn.psn_data_packet):
-        ip_address = data.src_ip if hasattr(data, 'src_ip') else 'N/A'
-        
+        if data.trackers:
+            ip_address = data.trackers[0].src_ip
+        else:
+            ip_address = 'N/A'
+        #print(systems_info)
         if ip_address in systems_info:
             system_trackers = systems_info[ip_address].get('trackers', {})
             system_name = systems_info[ip_address].get('server_name', 'Unknown')
@@ -91,6 +94,7 @@ def callback_function(data):
 
         for tracker in data.trackers:
             tracker_key = f"{tracker.src_ip}_{tracker.id}"  # Unique key combining IP and tracker ID
+            tracker_name = system_trackers.get(tracker.id, 'Unknown')
             tracker_info = {
                 'tracker_id': tracker.id,
                 'src_ip': tracker.src_ip,
@@ -98,7 +102,7 @@ def callback_function(data):
                 'pos_x': round(tracker.pos.x, 3),
                 'pos_y': round(tracker.pos.y, 3),
                 'pos_z': round(tracker.pos.z, 3),
-                'tracker_name': system_trackers.get(tracker.id, 'Unknown'),
+                'tracker_name': tracker_name,
                 'system_name': system_name,
                 'speed_x': round(tracker.speed.x, 3) if hasattr(tracker.speed, 'x') else 'N/A',
                 'speed_y': round(tracker.speed.y, 3) if hasattr(tracker.speed, 'y') else 'N/A',
@@ -170,172 +174,11 @@ def combined_info():
     sorted_trackers_list = list(trackers_list.values())
     sorted_stale_trackers_list = list(stale_trackers.values())
 
-    html_template = """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>PSN Combined Info</title>
-    </head>
-    <body>
-        <h1>System Information</h1>
-        <table border="1">
-            <tr>
-                <th>Source IP</th>
-                <th>Server Name</th>
-                <th>Tracker Count</th>
-                <th>Packet Timestamp</th>
-                <th>Frame ID</th>
-                <th>Frame Packet Count</th>
-                <th>Version High</th>
-                <th>Version Low</th>
-                <th>Timestamp</th>
-            </tr>
-            {% for ip, system in sorted_systems_info.items() %}
-            <tr>
-                <td>{{ system.src_ip }}</td>
-                <td>{{ system.server_name }}</td>
-                <td>{{ system.tracker_count }}</td>
-                <td>{{ system.packet_timestamp }}</td>
-                <td>{{ system.frame_id }}</td>
-                <td>{{ system.frame_packet_count }}</td>
-                <td>{{ system.version_high }}</td>
-                <td>{{ system.version_low }}</td>
-                <td>{{ system.timestamp }}</td>
-            </tr>
-            {% endfor %}
-        </table>
-        <h1>Stale Systems</h1>
-        <table border="1">
-            <tr>
-                <th>Source IP</th>
-                <th>Server Name</th>
-                <th>Tracker Count</th>
-                <th>Packet Timestamp</th>
-                <th>Frame ID</th>
-                <th>Frame Packet Count</th>
-                <th>Version High</th>
-                <th>Version Low</th>
-                <th>Timestamp</th>
-            </tr>
-            {% for ip, system in sorted_stale_systems_info.items() %}
-            <tr>
-                <td>{{ system.src_ip }}</td>
-                <td>{{ system.server_name }}</td>
-                <td>{{ system.tracker_count }}</td>
-                <td>{{ system.packet_timestamp }}</td>
-                <td>{{ system.frame_id }}</td>
-                <td>{{ system.frame_packet_count }}</td>
-                <td>{{ system.version_high }}</td>
-                <td>{{ system.version_low }}</td>
-                <td>{{ system.timestamp }}</td>
-            </tr>
-            {% endfor %}
-        </table>
-        <h1>Available Trackers</h1>
-        <table border="1">
-            <tr>
-                <th>Source IP</th>
-                <th>Server Name</th>
-                <th>Tracker ID</th>
-                <th>Tracker Name</th>
-                <th>Pos X</th>
-                <th>Pos Y</th>
-                <th>Pos Z</th>
-                <th>Speed X</th>
-                <th>Speed Y</th>
-                <th>Speed Z</th>
-                <th>Ori X</th>
-                <th>Ori Y</th>
-                <th>Ori Z</th>
-                <th>Accel X</th>
-                <th>Accel Y</th>
-                <th>Accel Z</th>
-                <th>Trgtpos X</th>
-                <th>Trgtpos Y</th>
-                <th>Trgtpos Z</th>
-                <th>Status</th>
-                <th>Timestamp</th>
-            </tr>
-            {% for tracker in sorted_trackers_list %}
-            <tr>
-                <td>{{ tracker.src_ip }}</td>
-                <td>{{ tracker.system_name }}</td>
-                <td>{{ tracker.tracker_id }}</td>
-                <td>{{ tracker.tracker_name }}</td>
-                <td>{{ tracker.pos_x }}</td>
-                <td>{{ tracker.pos_y }}</td>
-                <td>{{ tracker.pos_z }}</td>
-                <td>{{ tracker.speed_x }}</td>
-                <td>{{ tracker.speed_y }}</td>
-                <td>{{ tracker.speed_z }}</td>
-                <td>{{ tracker.ori_x }}</td>
-                <td>{{ tracker.ori_y }}</td>
-                <td>{{ tracker.ori_z }}</td>
-                <td>{{ tracker.accel_x }}</td>
-                <td>{{ tracker.accel_y }}</td>
-                <td>{{ tracker.accel_z }}</td>
-                <td>{{ tracker.trgtpos_x }}</td>
-                <td>{{ tracker.trgtpos_y }}</td>
-                <td>{{ tracker.trgtpos_z }}</td>
-                <td>{{ tracker.status }}</td>
-                <td>{{ tracker.timestamp }}</td>
-            </tr>
-            {% endfor %}
-        </table>
-        <h1>Stale Trackers</h1>
-        <table border="1">
-            <tr>
-                <th>Source IP</th>
-                <th>Server Name</th>
-                <th>Tracker ID</th>
-                <th>Tracker Name</th>
-                <th>Pos X</th>
-                <th>Pos Y</th>
-                <th>Pos Z</th>
-                <th>Speed X</th>
-                <th>Speed Y</th>
-                <th>Speed Z</th>
-                <th>Ori X</th>
-                <th>Ori Y</th>
-                <th>Ori Z</th>
-                <th>Accel X</th>
-                <th>Accel Y</th>
-                <th>Accel Z</th>
-                <th>Trgtpos X</th>
-                <th>Trgtpos Y</th>
-                <th>Trgtpos Z</th>
-                <th>Status</th>
-                <th>Timestamp</th>
-            </tr>
-            {% for tracker in sorted_stale_trackers_list %}
-            <tr>
-                <td>{{ tracker.src_ip }}</td>
-                <td>{{ tracker.system_name }}</td>
-                <td>{{ tracker.tracker_id }}</td>
-                <td>{{ tracker.tracker_name }}</td>
-                <td>{{ tracker.pos_x }}</td>
-                <td>{{ tracker.pos_y }}</td>
-                <td>{{ tracker.pos_z }}</td>
-                <td>{{ tracker.speed_x }}</td>
-                <td>{{ tracker.speed_y }}</td>
-                <td>{{ tracker.speed_z }}</td>
-                <td>{{ tracker.ori_x }}</td>
-                <td>{{ tracker.ori_y }}</td>
-                <td>{{ tracker.ori_z }}</td>
-                <td>{{ tracker.accel_x }}</td>
-                <td>{{ tracker.accel_y }}</td>
-                <td>{{ tracker.accel_z }}</td>
-                <td>{{ tracker.trgtpos_x }}</td>
-                <td>{{ tracker.trgtpos_y }}</td>
-                <td>{{ tracker.trgtpos_z }}</td>
-                <td>{{ tracker.status }}</td>
-                <td>{{ tracker.timestamp }}</td>
-            </tr>
-            {% endfor %}
-        </table>
-    </body>
-    </html>
-    """
+    # Assuming the HTML file is named 'template.html' and is located in the same directory as your Python script
+    file_path = 'templates/trackers.html'
+    with open(file_path, 'r') as file:
+        html_template = file.read()
+    
     return render_template_string(
         html_template, 
         sorted_systems_info=sorted_systems_info, 
@@ -390,7 +233,7 @@ def display_info():
             <input type="submit" value="Update Settings">
         </form>
         <h1>Combined Information</h1>
-        <iframe id="combinedInfoFrame" src="/combined_info" width="100%" height="1200px"></iframe>
+        <iframe id="combinedInfoFrame" src="/trackers" width="100%" height="1200px"></iframe>
     </body>
     </html>
     """

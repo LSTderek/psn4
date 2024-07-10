@@ -249,7 +249,7 @@ def parse_info(buffer, src_ip):
             system_name = parse_system_name(chunk_buffer)
         elif chunk_id == psn_info_chunk.PSN_INFO_TRACKER_LIST:
             trackers = parse_info_tracker_list(chunk_buffer)
-    packet = psn_info_packet(info, system_name, trackers)
+    packet = psn_info_packet(info, system_name, trackers) if 'trackers' in locals() else psn_info_packet(info, system_name, [])
     return packet
 
 
@@ -260,7 +260,7 @@ def parse_data(buffer, src_ip):
             info = parse_header(chunk_buffer[:12], src_ip)  # Pass the source IP address
         elif chunk_id == psn_data_chunk.PSN_DATA_TRACKER_LIST:
             trackers = parse_data_tracker_list(chunk_buffer, src_ip)  # Pass the source IP address
-    packet = psn_data_packet(info, trackers)
+    packet = psn_data_packet(info, trackers) if 'trackers' in locals() else psn_data_packet(info, [])
     return packet
 
 

@@ -1,7 +1,1 @@
-{
-    "log_info": false,
-    "log_debug": false,
-    "page_auto_refresh_rate": 1,
-    "system_info_cleanup_duration": 3,
-    "trackers_cleanup_duration": 1
-}
+{"log_info": false, "log_debug": false, "page_auto_refresh_rate": 1, "system_info_cleanup_duration": 3, "trackers_cleanup_duration": 1}
