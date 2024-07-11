@@ -84,7 +84,7 @@ def callback_function(data):
             ip_address = data.trackers[0].src_ip
         else:
             ip_address = 'N/A'
-        #print(systems_info)
+       # print(systems_info)
         if ip_address in systems_info:
             system_trackers = systems_info[ip_address].get('trackers', {})
             system_name = systems_info[ip_address].get('server_name', 'Unknown')
@@ -166,53 +166,47 @@ def clean_stale_entries(stop_event):
 
         stop_event.wait(1)  # Run cleanup every second
 
-# Define route to display combined system info, active trackers, and stale trackers
-@app.route('/combined_info', methods=['GET'])
-def combined_info():
-    sorted_systems_info = dict(sorted(systems_info.items()))
-    sorted_trackers_list = []
-    sorted_stale_trackers_list = []
-
-    for ip in sorted(trackers_list.keys()):
-        for tracker_id in sorted(trackers_list[ip].keys()):
-            sorted_trackers_list.append(trackers_list[ip][tracker_id])
-
-    for ip in sorted(stale_trackers.keys()):
-        for tracker_id in sorted(stale_trackers[ip].keys()):
-            sorted_stale_trackers_list.append(stale_trackers[ip][tracker_id])
 from flask import Flask, render_template
 
 app = Flask(__name__)
 
-@app.route('/combined_info', methods=['GET'])
+@app.route('/trackers', methods=['GET'])
 def combined_info():
     sorted_systems_info = dict(sorted(systems_info.items()))
-    sorted_trackers_list = []
-    sorted_stale_trackers_list = []
-
-    for ip in sorted(trackers_list.keys()):
-        for tracker_id in sorted(trackers_list[ip].keys()):
-            sorted_trackers_list.append(trackers_list[ip][tracker_id])
-
-    for ip in sorted(stale_trackers.keys()):
-        for tracker_id in sorted(stale_trackers[ip].keys()):
-            sorted_stale_trackers_list.append(stale_trackers[ip][tracker_id])
+    sorted_stale_systems_info = dict(sorted(stale_systems.items()))
+    sorted_trackers_list = list(trackers_list.values())
+    sorted_stale_trackers_list = list(stale_trackers.values())
 
     # Render the HTML template file with the sorted data
-    return render_template('templates/trackers.html', sorted_systems_info=sorted_systems_info, sorted_trackers_list=sorted_trackers_list, sorted_stale_trackers_list=sorted_stale_trackers_list)
-    
+    return render_template('trackers.html', 
+                           sorted_systems_info=sorted_systems_info, 
+                           sorted_stale_systems_info=sorted_stale_systems_info, 
+                           sorted_trackers_list=sorted_trackers_list, 
+                           sorted_stale_trackers_list=sorted_stale_trackers_list)
+
+
 # Define route to display the main page with logging controls and frames
 @app.route('/', methods=['GET', 'POST'])
 def display_info():
-    global log_info, log_debug, system_info_refresh_rate, trackers_refresh_rate, system_info_cleanup_duration, trackers_cleanup_duration
+    global log_info, log_debug, page_auto_refresh_rate, system_info_cleanup_duration, trackers_cleanup_duration
 
     if request.method == 'POST':
         log_info = 'log_info' in request.form
         log_debug = 'log_debug' in request.form
-        system_info_refresh_rate = int(request.form.get('system_info_refresh_rate', 5000))
-        trackers_refresh_rate = int(request.form.get('trackers_refresh_rate', 5000))
+        page_auto_refresh_rate = int(request.form.get('page_auto_refresh_rate', 5))
         system_info_cleanup_duration = int(request.form.get('system_info_cleanup_duration', 10))
         trackers_cleanup_duration = int(request.form.get('trackers_cleanup_duration', 5))
+
+        # Save the updated settings to config.json
+        config.update({
+            'log_info': log_info,
+            'log_debug': log_debug,
+            'page_auto_refresh_rate': page_auto_refresh_rate,
+            'system_info_cleanup_duration': system_info_cleanup_duration,
+            'trackers_cleanup_duration': trackers_cleanup_duration
+        })
+        with open(config_file, 'w') as file:
+            json.dump(config, file)
 
     html_template = """
     <!DOCTYPE html>
@@ -221,9 +215,9 @@ def display_info():
         <title>PSN System Info and Trackers</title>
         <script>
             function refreshIframe() {
-                document.getElementById('combinedInfoFrame').src = document.getElementById('combinedInfoFrame').src;
+                document.getElementById('trackerFrame').src = document.getElementById('trackerFrame').src;
             }
-            setInterval(refreshIframe, {{ system_info_refresh_rate }});  // Refresh combined info frame
+            setInterval(refreshIframe, {{ page_auto_refresh_rate }} * 1000);  // Refresh combined info frame in seconds
         </script>
     </head>
     <body>
@@ -231,14 +225,13 @@ def display_info():
         <form method="POST">
             <input type="checkbox" name="log_info" {% if log_info %}checked{% endif %}> Log Info<br>
             <input type="checkbox" name="log_debug" {% if log_debug %}checked{% endif %}> Log Debug<br>
-            System Info Refresh Rate (ms): <input type="number" name="system_info_refresh_rate" value="{{ system_info_refresh_rate }}"><br>
-            Trackers Refresh Rate (ms): <input type="number" name="trackers_refresh_rate" value="{{ trackers_refresh_rate }}"><br>
+            Page Auto Refresh Rate (s): <input type="number" name="page_auto_refresh_rate" value="{{ page_auto_refresh_rate }}"><br>
             System Info Cleanup Duration (s): <input type="number" name="system_info_cleanup_duration" value="{{ system_info_cleanup_duration }}"><br>
             Trackers Cleanup Duration (s): <input type="number" name="trackers_cleanup_duration" value="{{ trackers_cleanup_duration }}"><br>
             <input type="submit" value="Update Settings">
         </form>
         <h1>Combined Information</h1>
-        <iframe id="combinedInfoFrame" src="/combined_info" width="100%" height="900px"></iframe>
+        <iframe id="trackerFrame" src="/trackers" width="100%" height="1200px"></iframe>
     </body>
     </html>
     """
@@ -246,8 +239,7 @@ def display_info():
         html_template, 
         log_info=log_info, 
         log_debug=log_debug, 
-        system_info_refresh_rate=system_info_refresh_rate, 
-        trackers_refresh_rate=trackers_refresh_rate, 
+        page_auto_refresh_rate=page_auto_refresh_rate, 
         system_info_cleanup_duration=system_info_cleanup_duration, 
         trackers_cleanup_duration=trackers_cleanup_duration
     )
@@ -256,7 +248,7 @@ def display_info():
 class ServerThread(Thread):
     def __init__(self, app):
         Thread.__init__(self)
-        self.server = make_server('0.0.0.0', 5004, app)
+        self.server = make_server('0.0.0.0', 5002, app)
         self.ctx = app.app_context()
         self.ctx.push()
 

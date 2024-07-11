@@ -84,7 +84,7 @@ def callback_function(data):
             ip_address = data.trackers[0].src_ip
         else:
             ip_address = 'N/A'
-        #print(systems_info)
+       # print(systems_info)
         if ip_address in systems_info:
             system_trackers = systems_info[ip_address].get('trackers', {})
             system_name = systems_info[ip_address].get('server_name', 'Unknown')
@@ -170,49 +170,206 @@ def clean_stale_entries(stop_event):
 @app.route('/combined_info', methods=['GET'])
 def combined_info():
     sorted_systems_info = dict(sorted(systems_info.items()))
-    sorted_trackers_list = []
-    sorted_stale_trackers_list = []
+    sorted_stale_systems_info = dict(sorted(stale_systems.items()))
+    sorted_trackers_list = list(trackers_list.values())
+    sorted_stale_trackers_list = list(stale_trackers.values())
 
-    for ip in sorted(trackers_list.keys()):
-        for tracker_id in sorted(trackers_list[ip].keys()):
-            sorted_trackers_list.append(trackers_list[ip][tracker_id])
+    html_template = """
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>PSN Combined Info</title>
+    </head>
+    <body>
+        <h1>System Information</h1>
+        <table border="1">
+            <tr>
+                <th>Source IP</th>
+                <th>Server Name</th>
+                <th>Tracker Count</th>
+                <th>Packet Timestamp</th>
+                <th>Frame ID</th>
+                <th>Frame Packet Count</th>
+                <th>Version High</th>
+                <th>Version Low</th>
+                <th>Timestamp</th>
+            </tr>
+            {% for ip, system in sorted_systems_info.items() %}
+            <tr>
+                <td>{{ system.src_ip }}</td>
+                <td>{{ system.server_name }}</td>
+                <td>{{ system.tracker_count }}</td>
+                <td>{{ system.packet_timestamp }}</td>
+                <td>{{ system.frame_id }}</td>
+                <td>{{ system.frame_packet_count }}</td>
+                <td>{{ system.version_high }}</td>
+                <td>{{ system.version_low }}</td>
+                <td>{{ system.timestamp }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        <h1>Stale Systems</h1>
+        <table border="1">
+            <tr>
+                <th>Source IP</th>
+                <th>Server Name</th>
+                <th>Tracker Count</th>
+                <th>Packet Timestamp</th>
+                <th>Frame ID</th>
+                <th>Frame Packet Count</th>
+                <th>Version High</th>
+                <th>Version Low</th>
+                <th>Timestamp</th>
+            </tr>
+            {% for ip, system in sorted_stale_systems_info.items() %}
+            <tr>
+                <td>{{ system.src_ip }}</td>
+                <td>{{ system.server_name }}</td>
+                <td>{{ system.tracker_count }}</td>
+                <td>{{ system.packet_timestamp }}</td>
+                <td>{{ system.frame_id }}</td>
+                <td>{{ system.frame_packet_count }}</td>
+                <td>{{ system.version_high }}</td>
+                <td>{{ system.version_low }}</td>
+                <td>{{ system.timestamp }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        <h1>Available Trackers</h1>
+        <table border="1">
+            <tr>
+                <th>Source IP</th>
+                <th>Server Name</th>
+                <th>Tracker ID</th>
+                <th>Tracker Name</th>
+                <th>Pos X</th>
+                <th>Pos Y</th>
+                <th>Pos Z</th>
+                <th>Speed X</th>
+                <th>Speed Y</th>
+                <th>Speed Z</th>
+                <th>Ori X</th>
+                <th>Ori Y</th>
+                <th>Ori Z</th>
+                <th>Accel X</th>
+                <th>Accel Y</th>
+                <th>Accel Z</th>
+                <th>Trgtpos X</th>
+                <th>Trgtpos Y</th>
+                <th>Trgtpos Z</th>
+                <th>Status</th>
+                <th>Timestamp</th>
+            </tr>
+            {% for tracker in sorted_trackers_list %}
+            <tr>
+                <td>{{ tracker.src_ip }}</td>
+                <td>{{ tracker.system_name }}</td>
+                <td>{{ tracker.tracker_id }}</td>
+                <td>{{ tracker.tracker_name }}</td>
+                <td>{{ tracker.pos_x }}</td>
+                <td>{{ tracker.pos_y }}</td>
+                <td>{{ tracker.pos_z }}</td>
+                <td>{{ tracker.speed_x }}</td>
+                <td>{{ tracker.speed_y }}</td>
+                <td>{{ tracker.speed_z }}</td>
+                <td>{{ tracker.ori_x }}</td>
+                <td>{{ tracker.ori_y }}</td>
+                <td>{{ tracker.ori_z }}</td>
+                <td>{{ tracker.accel_x }}</td>
+                <td>{{ tracker.accel_y }}</td>
+                <td>{{ tracker.accel_z }}</td>
+                <td>{{ tracker.trgtpos_x }}</td>
+                <td>{{ tracker.trgtpos_y }}</td>
+                <td>{{ tracker.trgtpos_z }}</td>
+                <td>{{ tracker.status }}</td>
+                <td>{{ tracker.timestamp }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+        <h1>Stale Trackers</h1>
+        <table border="1">
+            <tr>
+                <th>Source IP</th>
+                <th>Server Name</th>
+                <th>Tracker ID</th>
+                <th>Tracker Name</th>
+                <th>Pos X</th>
+                <th>Pos Y</th>
+                <th>Pos Z</th>
+                <th>Speed X</th>
+                <th>Speed Y</th>
+                <th>Speed Z</th>
+                <th>Ori X</th>
+                <th>Ori Y</th>
+                <th>Ori Z</th>
+                <th>Accel X</th>
+                <th>Accel Y</th>
+                <th>Accel Z</th>
+                <th>Trgtpos X</th>
+                <th>Trgtpos Y</th>
+                <th>Trgtpos Z</th>
+                <th>Status</th>
+                <th>Timestamp</th>
+            </tr>
+            {% for tracker in sorted_stale_trackers_list %}
+            <tr>
+                <td>{{ tracker.src_ip }}</td>
+                <td>{{ tracker.system_name }}</td>
+                <td>{{ tracker.tracker_id }}</td>
+                <td>{{ tracker.tracker_name }}</td>
+                <td>{{ tracker.pos_x }}</td>
+                <td>{{ tracker.pos_y }}</td>
+                <td>{{ tracker.pos_z }}</td>
+                <td>{{ tracker.speed_x }}</td>
+                <td>{{ tracker.speed_y }}</td>
+                <td>{{ tracker.speed_z }}</td>
+                <td>{{ tracker.ori_x }}</td>
+                <td>{{ tracker.ori_y }}</td>
+                <td>{{ tracker.ori_z }}</td>
+                <td>{{ tracker.accel_x }}</td>
+                <td>{{ tracker.accel_y }}</td>
+                <td>{{ tracker.accel_z }}</td>
+                <td>{{ tracker.trgtpos_x }}</td>
+                <td>{{ tracker.trgtpos_y }}</td>
+                <td>{{ tracker.trgtpos_z }}</td>
+                <td>{{ tracker.status }}</td>
+                <td>{{ tracker.timestamp }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </body>
+    </html>
+    """
+    return render_template_string(
+        html_template, 
+        sorted_systems_info=sorted_systems_info, 
+        sorted_stale_systems_info=sorted_stale_systems_info, 
+        sorted_trackers_list=sorted_trackers_list, 
+        sorted_stale_trackers_list=sorted_stale_trackers_list
+    )
 
-    for ip in sorted(stale_trackers.keys()):
-        for tracker_id in sorted(stale_trackers[ip].keys()):
-            sorted_stale_trackers_list.append(stale_trackers[ip][tracker_id])
-from flask import Flask, render_template
-
-app = Flask(__name__)
-
-@app.route('/combined_info', methods=['GET'])
-def combined_info():
-    sorted_systems_info = dict(sorted(systems_info.items()))
-    sorted_trackers_list = []
-    sorted_stale_trackers_list = []
-
-    for ip in sorted(trackers_list.keys()):
-        for tracker_id in sorted(trackers_list[ip].keys()):
-            sorted_trackers_list.append(trackers_list[ip][tracker_id])
-
-    for ip in sorted(stale_trackers.keys()):
-        for tracker_id in sorted(stale_trackers[ip].keys()):
-            sorted_stale_trackers_list.append(stale_trackers[ip][tracker_id])
-
-    # Render the HTML template file with the sorted data
-    return render_template('templates/trackers.html', sorted_systems_info=sorted_systems_info, sorted_trackers_list=sorted_trackers_list, sorted_stale_trackers_list=sorted_stale_trackers_list)
-    
 # Define route to display the main page with logging controls and frames
 @app.route('/', methods=['GET', 'POST'])
 def display_info():
-    global log_info, log_debug, system_info_refresh_rate, trackers_refresh_rate, system_info_cleanup_duration, trackers_cleanup_duration
+    global log_info, log_debug, page_auto_refresh_rate, system_info_cleanup_duration, trackers_cleanup_duration
 
     if request.method == 'POST':
         log_info = 'log_info' in request.form
         log_debug = 'log_debug' in request.form
-        system_info_refresh_rate = int(request.form.get('system_info_refresh_rate', 5000))
-        trackers_refresh_rate = int(request.form.get('trackers_refresh_rate', 5000))
+        page_auto_refresh_rate = int(request.form.get('page_auto_refresh_rate', 5))
         system_info_cleanup_duration = int(request.form.get('system_info_cleanup_duration', 10))
         trackers_cleanup_duration = int(request.form.get('trackers_cleanup_duration', 5))
+
+        # Save the updated settings to config.json
+        config.update({
+            'log_info': log_info,
+            'log_debug': log_debug,
+            'page_auto_refresh_rate': page_auto_refresh_rate,
+            'system_info_cleanup_duration': system_info_cleanup_duration,
+            'trackers_cleanup_duration': trackers_cleanup_duration
+        })
+        with open(config_file, 'w') as file:
+            json.dump(config, file)
 
     html_template = """
     <!DOCTYPE html>
@@ -223,7 +380,7 @@ def display_info():
             function refreshIframe() {
                 document.getElementById('combinedInfoFrame').src = document.getElementById('combinedInfoFrame').src;
             }
-            setInterval(refreshIframe, {{ system_info_refresh_rate }});  // Refresh combined info frame
+            setInterval(refreshIframe, {{ page_auto_refresh_rate }} * 1000);  // Refresh combined info frame in seconds
         </script>
     </head>
     <body>
@@ -231,14 +388,13 @@ def display_info():
         <form method="POST">
             <input type="checkbox" name="log_info" {% if log_info %}checked{% endif %}> Log Info<br>
             <input type="checkbox" name="log_debug" {% if log_debug %}checked{% endif %}> Log Debug<br>
-            System Info Refresh Rate (ms): <input type="number" name="system_info_refresh_rate" value="{{ system_info_refresh_rate }}"><br>
-            Trackers Refresh Rate (ms): <input type="number" name="trackers_refresh_rate" value="{{ trackers_refresh_rate }}"><br>
+            Page Auto Refresh Rate (s): <input type="number" name="page_auto_refresh_rate" value="{{ page_auto_refresh_rate }}"><br>
             System Info Cleanup Duration (s): <input type="number" name="system_info_cleanup_duration" value="{{ system_info_cleanup_duration }}"><br>
             Trackers Cleanup Duration (s): <input type="number" name="trackers_cleanup_duration" value="{{ trackers_cleanup_duration }}"><br>
             <input type="submit" value="Update Settings">
         </form>
         <h1>Combined Information</h1>
-        <iframe id="combinedInfoFrame" src="/combined_info" width="100%" height="900px"></iframe>
+        <iframe id="combinedInfoFrame" src="/combined_info" width="100%" height="1200px"></iframe>
     </body>
     </html>
     """
@@ -246,8 +402,7 @@ def display_info():
         html_template, 
         log_info=log_info, 
         log_debug=log_debug, 
-        system_info_refresh_rate=system_info_refresh_rate, 
-        trackers_refresh_rate=trackers_refresh_rate, 
+        page_auto_refresh_rate=page_auto_refresh_rate, 
         system_info_cleanup_duration=system_info_cleanup_duration, 
         trackers_cleanup_duration=trackers_cleanup_duration
     )
@@ -256,7 +411,7 @@ def display_info():
 class ServerThread(Thread):
     def __init__(self, app):
         Thread.__init__(self)
-        self.server = make_server('0.0.0.0', 5004, app)
+        self.server = make_server('0.0.0.0', 5002, app)
         self.ctx = app.app_context()
         self.ctx.push()
 
