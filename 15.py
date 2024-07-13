@@ -25,7 +25,17 @@ default_config = {
     'log_debug': False,
     'page_auto_refresh_rate': 1,  # in seconds
     'system_info_cleanup_duration': 3,  # in seconds
-    'trackers_cleanup_duration': 1  # in seconds
+    'trackers_cleanup_duration': 1,  # in seconds
+    'eth0': {
+        'method': 'dhcp',
+        'ip_address': '',
+        'netmask': ''
+    },
+    'eth1': {
+        'method': 'dhcp',
+        'ip_address': '',
+        'netmask': ''
+    }
 }
 
 # Load or create config file
@@ -38,12 +48,17 @@ else:
     with open(config_file, 'w') as file:
         json.dump(config, file)
 
+# Merge default_config with the loaded config to ensure all keys are present
+config = {**default_config, **config}
+
 # Apply settings from config file
 log_info = config['log_info']
 log_debug = config['log_debug']
 page_auto_refresh_rate = config['page_auto_refresh_rate']
 system_info_cleanup_duration = config['system_info_cleanup_duration']
 trackers_cleanup_duration = config['trackers_cleanup_duration']
+eth0_config = config['eth0']
+eth1_config = config['eth1']
 
 # Define a function to convert bytes to string
 def bytes_to_str(b):
@@ -87,24 +102,82 @@ def get_ip_settings(interface):
     except Exception as e:
         return str(e), ''
 
-# Define a function to set IP settings
-def set_ip_settings(interface, ip_address, netmask, method):
+# Define a function to set IP settings in config.json
+def set_ip_settings_in_config(interface, ip_address, netmask, method):
+    global config
+    config[interface]['method'] = method
+    config[interface]['ip_address'] = ip_address
+    config[interface]['netmask'] = netmask
+    with open(config_file, 'w') as file:
+        json.dump(config, file)
+    return 'Settings updated in config.json'
+
+# Helper function to run subprocess commands with timeout
+def run_subprocess(cmd):
     try:
-        if method == 'static':
+        process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate(timeout=10)
+        if process.returncode != 0:
+            return f'Error: {stderr.decode().strip()}'
+        return 'Success'
+    except subprocess.TimeoutExpired:
+        process.kill()
+        return 'Error: Command timed out'
+
+# Define a function to apply IP settings from config.json
+def apply_ip_settings(interface, settings):
+    try:
+        if settings['method'] == 'static':
+            ip_address = settings['ip_address']
+            netmask = settings['netmask']
             if not validate_ip_address(ip_address):
                 return 'Invalid IP address'
             if not validate_netmask(netmask):
                 return 'Invalid netmask'
 
-            subprocess.run(['sudo', 'ip', 'addr', 'flush', 'dev', interface], check=True)
-            subprocess.run(['sudo', 'ip', 'addr', 'add', f'{ip_address}/{netmask}', 'dev', interface], check=True)
-            subprocess.run(['sudo', 'ip', 'link', 'set', 'dev', interface, 'up'], check=True)
-        elif method == 'dhcp':
-            subprocess.run(['sudo', 'dhclient', '-r', interface], check=True)
-            subprocess.run(['sudo', 'dhclient', interface], check=True)
+            result = run_subprocess(['sudo', 'ip', 'addr', 'flush', 'dev', interface])
+            if 'Error' in result:
+                return result
+            result = run_subprocess(['sudo', 'ip', 'addr', 'add', f'{ip_address}/{netmask}', 'dev', interface])
+            if 'Error' in result:
+                return result
+            result = run_subprocess(['sudo', 'ip', 'link', 'set', 'dev', interface, 'up'])
+            if 'Error' in result:
+                return result
+        elif settings['method'] == 'dhcp':
+            result = run_subprocess(['sudo', 'dhclient', '-r', interface])
+            if 'Error' in result:
+                return result
+            result = run_subprocess(['sudo', 'ip', 'addr', 'flush', 'dev', interface])
+            if 'Error' in result:
+                return result
+            result = run_subprocess(['sudo', 'dhclient', interface])
+            if 'Error' in result:
+                return result
         return 'Success'
     except subprocess.CalledProcessError as e:
         return f'Error: {e}'
+
+# Apply IP settings on startup
+def apply_ip_settings_on_startup():
+    global eth0_config, eth1_config, eth0_apply_result, eth1_apply_result
+    print("Applying eth0 IP settings...")
+    eth0_apply_result = apply_ip_settings('eth0', eth0_config)
+    print(f"eth0 apply result: {eth0_apply_result}")
+
+    print("Applying eth1 IP settings...")
+    eth1_apply_result = apply_ip_settings('eth1', eth1_config)
+    print(f"eth1 apply result: {eth1_apply_result}")
+
+apply_ip_settings_on_startup()
+
+# Check if the network interface is available
+def is_interface_available(interface):
+    try:
+        result = subprocess.run(['ip', 'link', 'show', interface], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        return result.returncode == 0
+    except Exception as e:
+        return False
 
 # Define a callback function to handle the received PSN data
 def callback_function(data):
@@ -187,7 +260,10 @@ def callback_function(data):
             print(f"Received tracker data from {ip_address} at {timestamp}")
 
 # Create a receiver object with the callback function
-receiver = pypsn.receiver(callback_function)
+if is_interface_available('eth0') or is_interface_available('eth1'):
+    receiver = pypsn.receiver(callback_function)
+else:
+    print("Network interfaces eth0 or eth1 not available.")
 
 # Function to clean up stale entries
 def clean_stale_entries(stop_event):
@@ -239,11 +315,10 @@ def combined_info():
                            sorted_trackers_list=sorted_trackers_list, 
                            sorted_stale_trackers_list=sorted_stale_trackers_list)
 
-
 # Define route to display the main page with logging controls and frames
 @app.route('/', methods=['GET', 'POST'])
 def display_info():
-    global log_info, log_debug, page_auto_refresh_rate, system_info_cleanup_duration, trackers_cleanup_duration
+    global log_info, log_debug, page_auto_refresh_rate, system_info_cleanup_duration, trackers_cleanup_duration, eth0_config, eth1_config
 
     if request.method == 'POST':
         log_info = 'log_info' in request.form
@@ -251,6 +326,16 @@ def display_info():
         page_auto_refresh_rate = int(request.form.get('page_auto_refresh_rate', 5))
         system_info_cleanup_duration = int(request.form.get('system_info_cleanup_duration', 10))
         trackers_cleanup_duration = int(request.form.get('trackers_cleanup_duration', 5))
+
+        eth0_method = request.form['eth0_method']
+        eth0_ip_address = request.form['eth0_ip_address']
+        eth0_netmask = request.form['eth0_netmask']
+        eth1_method = request.form['eth1_method']
+        eth1_ip_address = request.form['eth1_ip_address']
+        eth1_netmask = request.form['eth1_netmask']
+
+        set_ip_settings_in_config('eth0', eth0_ip_address, eth0_netmask, eth0_method)
+        set_ip_settings_in_config('eth1', eth1_ip_address, eth1_netmask, eth1_method)
 
         # Save the updated settings to config.json
         config.update({
@@ -263,8 +348,16 @@ def display_info():
         with open(config_file, 'w') as file:
             json.dump(config, file)
 
-    ip_eth0, netmask_eth0 = get_ip_settings('eth0')
-    ip_eth1, netmask_eth1 = get_ip_settings('eth1')
+        # Apply IP settings immediately after updating the config
+        global eth0_apply_result, eth1_apply_result
+        eth0_apply_result = apply_ip_settings('eth0', eth0_config)
+        eth1_apply_result = apply_ip_settings('eth1', eth1_config)
+    else:
+        eth0_apply_result = ''
+        eth1_apply_result = ''
+
+    current_ip_eth0, current_netmask_eth0 = get_ip_settings('eth0')
+    current_ip_eth1, current_netmask_eth1 = get_ip_settings('eth1')
 
     html_template = """
     <!DOCTYPE html>
@@ -281,48 +374,59 @@ def display_info():
                 var iframe = document.getElementById('trackerFrame');
                 iframe.style.height = iframe.contentWindow.document.body.scrollHeight + 'px';
             }
+
+            function showConfirmation() {
+                var eth0_ip = document.querySelector('[name="eth0_ip_address"]').value;
+                var eth1_ip = document.querySelector('[name="eth1_ip_address"]').value;
+                if (confirm('IP settings updated. Redirect to new IP addresses?')) {
+                    if (eth0_ip) {
+                        window.location.href = 'http://' + eth0_ip;
+                    } else if (eth1_ip) {
+                        window.location.href = 'http://' + eth1_ip;
+                    }
+                }
+            }
         </script>
     </head>
     <body>
         <h1>Logging Controls</h1>
-        <form method="POST">
+        <form method="POST" onsubmit="showConfirmation();">
             <input type="checkbox" name="log_info" {% if log_info %}checked{% endif %}> Log Info<br>
             <input type="checkbox" name="log_debug" {% if log_debug %}checked{% endif %}> Log Debug<br>
             Page Auto Refresh Rate (s): <input type="number" name="page_auto_refresh_rate" value="{{ page_auto_refresh_rate }}"><br>
             System Info Cleanup Duration (s): <input type="number" name="system_info_cleanup_duration" value="{{ system_info_cleanup_duration }}"><br>
             Trackers Cleanup Duration (s): <input type="number" name="trackers_cleanup_duration" value="{{ trackers_cleanup_duration }}"><br>
-            <input type="submit" value="Update Settings">
-        </form>
-        <h1>Network Settings</h1>
-        <form id="ipForm" method="POST" action="/update_ip">
             <fieldset>
                 <legend>eth0</legend>
                 <label for="eth0_method">Method:</label>
                 <select name="eth0_method">
-                    <option value="static">Static</option>
-                    <option value="dhcp">DHCP</option>
+                    <option value="static" {% if eth0_config['method'] == 'static' %}selected{% endif %}>Static</option>
+                    <option value="dhcp" {% if eth0_config['method'] == 'dhcp' %}selected{% endif %}>DHCP</option>
                 </select><br>
                 <label for="eth0_ip_address">IP Address:</label>
-                <input type="text" name="eth0_ip_address" value="{{ ip_eth0 }}" required><br>
+                <input type="text" name="eth0_ip_address" value="{{ current_ip_eth0 }}" required><br>
                 <label for="eth0_netmask">Netmask:</label>
-                <input type="text" name="eth0_netmask" value="{{ netmask_eth0 }}" required><br>
+                <input type="text" name="eth0_netmask" value="{{ current_netmask_eth0 }}" required><br>
             </fieldset>
             <fieldset>
                 <legend>eth1</legend>
                 <label for="eth1_method">Method:</label>
                 <select name="eth1_method">
-                    <option value="static">Static</option>
-                    <option value="dhcp">DHCP</option>
+                    <option value="static" {% if eth1_config['method'] == 'static' %}selected{% endif %}>Static</option>
+                    <option value="dhcp" {% if eth1_config['method'] == 'dhcp' %}selected{% endif %}>DHCP</option>
                 </select><br>
                 <label for="eth1_ip_address">IP Address:</label>
-                <input type="text" name="eth1_ip_address" value="{{ ip_eth1 }}" required><br>
+                <input type="text" name="eth1_ip_address" value="{{ current_ip_eth1 }}" required><br>
                 <label for="eth1_netmask">Netmask:</label>
-                <input type="text" name="eth1_netmask" value="{{ netmask_eth1 }}" required><br>
+                <input type="text" name="eth1_netmask" value="{{ current_netmask_eth1 }}" required><br>
             </fieldset>
-            <input type="submit" value="Update IP">
+            <input type="submit" value="Update Settings">
         </form>
         <h1>Combined Information</h1>
         <iframe id="trackerFrame" src="/trackers" width="100%" onload="resizeIframe()"></iframe>
+        <h2>Apply IP Settings Status</h2>
+        <p>eth0: {{ eth0_apply_result }}</p>
+        <p>eth1: {{ eth1_apply_result }}</p>
     </body>
     </html>
     """
@@ -334,10 +438,14 @@ def display_info():
         page_auto_refresh_rate=page_auto_refresh_rate, 
         system_info_cleanup_duration=system_info_cleanup_duration, 
         trackers_cleanup_duration=trackers_cleanup_duration,
-        ip_eth0=ip_eth0,
-        netmask_eth0=netmask_eth0,
-        ip_eth1=ip_eth1,
-        netmask_eth1=netmask_eth1
+        eth0_config=eth0_config,
+        eth1_config=eth1_config,
+        current_ip_eth0=current_ip_eth0,
+        current_netmask_eth0=current_netmask_eth0,
+        current_ip_eth1=current_ip_eth1,
+        current_netmask_eth1=current_netmask_eth1,
+        eth0_apply_result=eth0_apply_result,
+        eth1_apply_result=eth1_apply_result
     )
 
 @app.route('/update_ip', methods=['POST'])
@@ -349,8 +457,8 @@ def update_ip():
     eth1_ip_address = request.form['eth1_ip_address']
     eth1_netmask = request.form['eth1_netmask']
 
-    result_eth0 = set_ip_settings('eth0', eth0_ip_address, eth0_netmask, eth0_method)
-    result_eth1 = set_ip_settings('eth1', eth1_ip_address, eth1_netmask, eth1_method)
+    result_eth0 = set_ip_settings_in_config('eth0', eth0_ip_address, eth0_netmask, eth0_method)
+    result_eth1 = set_ip_settings_in_config('eth1', eth1_ip_address, eth1_netmask, eth1_method)
     
     return jsonify({'result_eth0': result_eth0, 'result_eth1': result_eth1})
 
