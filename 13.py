@@ -1,6 +1,7 @@
-# Import necessary modules
+# File: psn_receiver.py
+
 import pypsn
-from flask import Flask, render_template_string, request
+from flask import Flask, render_template_string, request, render_template
 from threading import Thread, Event
 import time
 from datetime import datetime
@@ -84,7 +85,6 @@ def callback_function(data):
             ip_address = data.trackers[0].src_ip
         else:
             ip_address = 'N/A'
-       # print(systems_info)
         if ip_address in systems_info:
             system_trackers = systems_info[ip_address].get('trackers', {})
             system_name = systems_info[ip_address].get('server_name', 'Unknown')
@@ -128,7 +128,7 @@ def callback_function(data):
             print(f"Received tracker data from {ip_address} at {timestamp}")
 
 # Create a receiver object with the callback function
-receiver = pypsn.receiver(callback_function)
+receiver = pypsn.receiver(callback_function, ip_addr="0.0.0.0")
 
 # Function to clean up stale entries
 def clean_stale_entries(stop_event):
@@ -166,10 +166,6 @@ def clean_stale_entries(stop_event):
 
         stop_event.wait(1)  # Run cleanup every second
 
-from flask import Flask, render_template
-
-app = Flask(__name__)
-
 @app.route('/trackers', methods=['GET'])
 def combined_info():
     sorted_systems_info = dict(sorted(systems_info.items()))
@@ -183,7 +179,6 @@ def combined_info():
                            sorted_stale_systems_info=sorted_stale_systems_info, 
                            sorted_trackers_list=sorted_trackers_list, 
                            sorted_stale_trackers_list=sorted_stale_trackers_list)
-
 
 # Define route to display the main page with logging controls and frames
 @app.route('/', methods=['GET', 'POST'])
@@ -258,6 +253,13 @@ class ServerThread(Thread):
 
     def shutdown(self):
         self.server.shutdown()
+
+# Middleware to handle malformed requests
+@app.before_request
+def before_request_func():
+    if not request.is_json and request.method == 'POST':
+        print("Ignoring non-JSON POST request")
+        return 'Bad request', 400
 
 # Start the receiver and Flask server in separate threads
 if __name__ == '__main__':
